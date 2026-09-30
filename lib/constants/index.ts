@@ -23,3 +23,6 @@ export const printHeightLightPoint="Luxury Streetwear"
 export const categoryName="Streetwear";
 
 export const RESET_TOKEN_EXPIRES_IN_MS = 15 * 60 * 1000;
+
+    export const apiKey = process.env.RESEND_API_KEY;
+   export const fromEmail = process.env.MAIL_FROM;
