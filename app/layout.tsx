@@ -5,6 +5,7 @@ import { Fraunces, Inter } from 'next/font/google';
 import { Toaster } from 'sonner';
 
 import './globals.css';
+import { PromoPopup } from './components/home/PromoPopup';
 
 const SITE_URL = 'https://www.quietflame.shop';
 
@@ -235,8 +236,7 @@ export default function RootLayout({
 
             <body className="font-sans antialiased">
                 {children}
-
-                <Toaster
+          <Toaster
                     position="top-right"
                     duration={3000}
                     toastOptions={{

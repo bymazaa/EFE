@@ -15,6 +15,7 @@ export async function updateSettings(
 ): Promise<ActionResult<SiteSettingsDTO>> {
     const result = await updateSettingsService(data);
 
+
     if (!result.success) {
         return result;
     }

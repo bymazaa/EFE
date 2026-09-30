@@ -19,7 +19,7 @@ import { config } from 'dotenv';
 // Load env before importing anything
 // that may read process.env.
 config({
-    path: '.env.local',
+    path: '.env',
 });
 
 async function main() {

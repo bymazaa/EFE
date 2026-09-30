@@ -1,7 +1,7 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
+
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -14,14 +14,13 @@ import {
     Settings2,
     ShoppingCart,
     UserRound,
-    Handshake ,
+    Handshake,
     X,
-    UserCog 
+    UserCog,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { LogoutButton } from '@/app/components/admin/LogoutButton';
-
 
 const NAV_ITEMS = [
     {
@@ -42,7 +41,6 @@ const NAV_ITEMS = [
         icon: Package2,
         exact: false,
     },
-    
     {
         href: '/admin/account',
         label: 'Account',
@@ -58,13 +56,13 @@ const NAV_ITEMS = [
     {
         href: '/admin/admin-management',
         label: 'Admin Management',
-        icon: UserCog  ,
+        icon: UserCog,
         exact: false,
     },
     {
         href: '/admin/hand-over-guide',
         label: 'Hand Over Guide',
-        icon: Handshake ,
+        icon: Handshake,
         exact: false,
     },
 ] as const;
@@ -85,7 +83,9 @@ export function Sidebar({
 
     // Restore sidebar state.
     useEffect(() => {
-        const saved = localStorage.getItem('admin-sidebar-collapsed');
+        const saved = localStorage.getItem(
+            'admin-sidebar-collapsed',
+        );
 
         if (saved === 'true') {
             setIsCollapsed(true);
@@ -107,7 +107,9 @@ export function Sidebar({
 
     // Lock body scroll while mobile drawer is open.
     useEffect(() => {
-        document.body.style.overflow = isOpen ? 'hidden' : '';
+        document.body.style.overflow = isOpen
+            ? 'hidden'
+            : '';
 
         return () => {
             document.body.style.overflow = '';
@@ -124,42 +126,68 @@ export function Sidebar({
             }
         };
 
-        window.addEventListener('keydown', onKeyDown);
+        window.addEventListener(
+            'keydown',
+            onKeyDown,
+        );
 
         return () => {
-            window.removeEventListener('keydown', onKeyDown);
+            window.removeEventListener(
+                'keydown',
+                onKeyDown,
+            );
         };
     }, [isOpen]);
 
-    const isActive = (href: string, exact?: boolean) =>
+    const isActive = (
+        href: string,
+        exact?: boolean,
+    ) =>
         exact
             ? pathname === href
-            : pathname === href || pathname.startsWith(`${href}/`);
+            : pathname === href ||
+              pathname.startsWith(`${href}/`);
 
     const initials =
         adminName
             .split(' ')
             .filter(Boolean)
             .slice(0, 2)
-            .map((part) => part[0]?.toUpperCase())
+            .map((part) =>
+                part[0]?.toUpperCase(),
+            )
             .join('') || 'A';
 
     const navList = (
         <nav className="flex flex-1 flex-col gap-1 px-2.5">
             {NAV_ITEMS.map(
-                ({ href, label, icon: Icon, exact }) => {
-                    const active = isActive(href, exact);
+                ({
+                    href,
+                    label,
+                    icon: Icon,
+                    exact,
+                }) => {
+                    const active = isActive(
+                        href,
+                        exact,
+                    );
 
                     return (
                         <Link
                             key={href}
                             href={href}
-                            onClick={() => setIsOpen(false)}
+                            onClick={() =>
+                                setIsOpen(false)
+                            }
                             aria-current={
-                                active ? 'page' : undefined
+                                active
+                                    ? 'page'
+                                    : undefined
                             }
                             title={
-                                isCollapsed ? label : undefined
+                                isCollapsed
+                                    ? label
+                                    : undefined
                             }
                             className={cn(
                                 'group relative flex h-10 items-center rounded-md text-[13px] font-medium transition-all duration-200',
@@ -189,7 +217,9 @@ export function Sidebar({
                                         : 'text-slate-500 group-hover:text-amber-700',
                                     'group-hover:scale-105',
                                 )}
-                                strokeWidth={active ? 2 : 1.7}
+                                strokeWidth={
+                                    active ? 2 : 1.7
+                                }
                             />
 
                             <span
@@ -283,7 +313,9 @@ export function Sidebar({
                 >
                     <Link
                         href="/admin"
-                        onClick={() => setIsOpen(false)}
+                        onClick={() =>
+                            setIsOpen(false)
+                        }
                         title={
                             isCollapsed
                                 ? brandName
@@ -295,7 +327,8 @@ export function Sidebar({
                             {brandName
                                 .trim()
                                 .charAt(0)
-                                .toUpperCase() || 'S'}
+                                .toUpperCase() ||
+                                'S'}
                         </div>
 
                         <span
@@ -313,7 +346,9 @@ export function Sidebar({
                     {/* Mobile close */}
                     <button
                         type="button"
-                        onClick={() => setIsOpen(false)}
+                        onClick={() =>
+                            setIsOpen(false)
+                        }
                         aria-label="Close menu"
                         className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-amber-50 hover:text-amber-700 md:hidden"
                     >
@@ -344,7 +379,9 @@ export function Sidebar({
                     <button
                         type="button"
                         onClick={() =>
-                            setIsCollapsed((prev) => !prev)
+                            setIsCollapsed(
+                                (prev) => !prev,
+                            )
                         }
                         aria-label={
                             isCollapsed
@@ -426,12 +463,41 @@ export function Sidebar({
 
                     <div
                         className={cn(
-                            'mt-2',
+                            'mt-2 flex flex-col gap-1',
                             isCollapsed
-                                ? 'flex justify-center'
+                                ? 'items-center'
                                 : '',
                         )}
                     >
+                        <Link
+                            href="/"
+                            onClick={() =>
+                                setIsOpen(false)
+                            }
+                            title={
+                                isCollapsed
+                                    ? 'Go to Home Page'
+                                    : undefined
+                            }
+                            className={cn(
+                                'flex h-9 items-center rounded-lg text-[12px] font-medium text-slate-500 transition-all duration-200 hover:bg-amber-50 hover:text-amber-700',
+                                isCollapsed
+                                    ? 'w-9 justify-center'
+                                    : 'px-3',
+                            )}
+                        >
+                            <span
+                                className={cn(
+                                    'truncate transition-all duration-200',
+                                    isCollapsed
+                                        ? 'w-0 overflow-hidden opacity-0'
+                                        : 'w-auto opacity-100',
+                                )}
+                            >
+                                Go to Home Page
+                            </span>
+                        </Link>
+
                         <LogoutButton />
                     </div>
                 </div>
@@ -439,4 +505,3 @@ export function Sidebar({
         </>
     );
 }
-

@@ -656,8 +656,8 @@ export default function CartPageClient() {
 
                         <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-chocolate-soft">
                             Looks like you haven&apos;t added
-                            anything yet. Explore our handcrafted
-                            {categoryName} and find something you love.
+                            anything yet. Explore our  
+                             {categoryName} and find something you love.
                         </p>
 
                         <Link

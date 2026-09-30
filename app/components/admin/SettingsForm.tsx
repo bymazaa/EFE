@@ -35,10 +35,18 @@ import {
 
 import { toast } from 'sonner';
 
+/* ============================================================
+   Types
+============================================================ */
+
 type FormState = Omit<
     SiteSettingsDTO,
     'updatedAt'
 >;
+
+/* ============================================================
+   Helpers
+============================================================ */
 
 function toFormState(
     dto: SiteSettingsDTO,
@@ -68,9 +76,41 @@ function toFormState(
     };
 }
 
+type ActionResultWithErrors = {
+    success: boolean;
+    error?: string;
+    data?: unknown;
+    fieldErrors?: Record<string, string[]>;
+};
+
+function extractFieldErrors(
+    result: ActionResultWithErrors,
+): Record<string, string> {
+    if (!result.fieldErrors) {
+        return {};
+    }
+
+    return Object.fromEntries(
+        Object.entries(result.fieldErrors).map(
+            ([key, messages]) => [
+                key,
+                messages[0] ?? 'Invalid value.',
+            ],
+        ),
+    );
+}
+
+/* ============================================================
+   Props
+============================================================ */
+
 interface SettingsFormProps {
     initialSettings: SiteSettingsDTO;
 }
+
+/* ============================================================
+   Main Form
+============================================================ */
 
 export default function SettingsForm({
     initialSettings,
@@ -88,6 +128,10 @@ export default function SettingsForm({
     const [fieldErrors, setFieldErrors] =
         useState<Record<string, string>>({});
 
+    /* ========================================================
+       Normal field setter
+    ======================================================== */
+
     function set<K extends keyof FormState>(
         key: K,
         value: FormState[K],
@@ -99,7 +143,9 @@ export default function SettingsForm({
 
         if (fieldErrors[key as string]) {
             setFieldErrors((prev) => {
-                const next = { ...prev };
+                const next = {
+                    ...prev,
+                };
 
                 delete next[key as string];
 
@@ -107,6 +153,10 @@ export default function SettingsForm({
             });
         }
     }
+
+    /* ========================================================
+       Social field setter
+    ======================================================== */
 
     function setSocial(
         key: keyof FormState['social'],
@@ -120,11 +170,14 @@ export default function SettingsForm({
             },
         }));
 
-        const fieldKey = `social.${String(key)}`;
+        const fieldKey =
+            `social.${String(key)}`;
 
         if (fieldErrors[fieldKey]) {
             setFieldErrors((prev) => {
-                const next = { ...prev };
+                const next = {
+                    ...prev,
+                };
 
                 delete next[fieldKey];
 
@@ -133,57 +186,54 @@ export default function SettingsForm({
         }
     }
 
-    function handleSubmit(
-        event: FormEvent<HTMLFormElement>,
-    ) {
-        event.preventDefault();
+    /* ========================================================
+       Submit
+    ======================================================== */
+function handleSubmit(
+    event: FormEvent<HTMLFormElement>,
+) {
+    event.preventDefault();
 
-        setFieldErrors({});
+    setFieldErrors({});
 
-        startTransition(async () => {
-            const result =
-                await updateSettings(form);
+    startTransition(async () => {
+        const result =
+            (await updateSettings(form)) as ActionResultWithErrors;
 
-            if (!result.success) {
-                toast.error(
+        if (!result.success) {
+            const errors =
+                extractFieldErrors(result);
+
+            setFieldErrors(errors);
+
+            toast.error(
+                result.error ??
                     'Could not save settings.',
-                    {
-                        description:
-                            'Please check your information and try again.',
-                    },
-                );
-
-                return;
-            }
-
-            toast.success(
-                result.message ??
-                    'Settings saved successfully.',
                 {
                     description:
-                        'Your store settings have been updated.',
+                        'Please check the highlighted fields and try again.',
                 },
             );
 
-            /**
-             * Sync the local form with the exact
-             * data returned from the database.
-             */
+            return;
+        }
+        
+        toast.success(
+           
+                'Settings saved successfully.',
+        );
+
+        if (result.data) {
             setForm(
                 toFormState(
                     result.data as SiteSettingsDTO,
                 ),
             );
+        }
 
-            /**
-             * Refresh the current route so any
-             * server components using getSettings()
-             * receive the latest data.
-             */
-            router.refresh();
-        });
-    }
-
+        router.refresh();
+    });
+}
     const initial =
         form.brandName
             .trim()
@@ -198,12 +248,14 @@ export default function SettingsForm({
                 noValidate
             >
                 <div className="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm">
+
                     {/* =====================================================
                         Header
                     ===================================================== */}
 
                     <div className="border-b border-orange-100 bg-[#fffaf6] px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
                         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+
                             <div className="flex min-w-0 items-center gap-3.5">
                                 <LogoPreview
                                     key={form.logoUrl}
@@ -243,6 +295,7 @@ export default function SettingsForm({
                                     </p>
                                 </div>
                             </div>
+
                         </div>
                     </div>
 
@@ -258,6 +311,7 @@ export default function SettingsForm({
                         description="Your store identity displayed across the storefront and search results."
                     >
                         <div className="space-y-5">
+
                             <Field
                                 label="Brand name"
                                 htmlFor="brandName"
@@ -285,7 +339,16 @@ export default function SettingsForm({
                                     aria-invalid={Boolean(
                                         fieldErrors.brandName,
                                     )}
-                                    className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-60`}
+                                    aria-describedby={
+                                        fieldErrors.brandName
+                                            ? 'brandName-feedback'
+                                            : undefined
+                                    }
+                                    className={`${inputClass} ${
+                                        fieldErrors.brandName
+                                            ? errorInputClass
+                                            : ''
+                                    } disabled:cursor-not-allowed disabled:opacity-60`}
                                 />
                             </Field>
 
@@ -316,7 +379,16 @@ export default function SettingsForm({
                                         aria-invalid={Boolean(
                                             fieldErrors.description,
                                         )}
-                                        className={`${inputClass} min-h-[112px] resize-y leading-6 disabled:cursor-not-allowed disabled:opacity-60`}
+                                        aria-describedby={
+                                            fieldErrors.description
+                                                ? 'description-feedback'
+                                                : undefined
+                                        }
+                                        className={`${inputClass} ${
+                                            fieldErrors.description
+                                                ? errorInputClass
+                                                : ''
+                                        } min-h-[112px] resize-y leading-6 disabled:cursor-not-allowed disabled:opacity-60`}
                                     />
 
                                     <span className="pointer-events-none absolute bottom-2.5 right-3 text-[10px] text-slate-400">
@@ -360,10 +432,20 @@ export default function SettingsForm({
                                         aria-invalid={Boolean(
                                             fieldErrors.logoUrl,
                                         )}
-                                        className={`${inputClass} pl-9 disabled:cursor-not-allowed disabled:opacity-60`}
+                                        aria-describedby={
+                                            fieldErrors.logoUrl
+                                                ? 'logoUrl-feedback'
+                                                : undefined
+                                        }
+                                        className={`${inputClass} ${
+                                            fieldErrors.logoUrl
+                                                ? errorInputClass
+                                                : ''
+                                        } pl-9 disabled:cursor-not-allowed disabled:opacity-60`}
                                     />
                                 </div>
                             </Field>
+
                         </div>
                     </Section>
 
@@ -379,6 +461,7 @@ export default function SettingsForm({
                         description="Information customers can use to contact your store."
                     >
                         <div className="space-y-5">
+
                             <Field
                                 label="Address"
                                 htmlFor="address"
@@ -408,7 +491,16 @@ export default function SettingsForm({
                                         aria-invalid={Boolean(
                                             fieldErrors.address,
                                         )}
-                                        className={`${inputClass} pl-9 disabled:cursor-not-allowed disabled:opacity-60`}
+                                        aria-describedby={
+                                            fieldErrors.address
+                                                ? 'address-feedback'
+                                                : undefined
+                                        }
+                                        className={`${inputClass} ${
+                                            fieldErrors.address
+                                                ? errorInputClass
+                                                : ''
+                                        } pl-9 disabled:cursor-not-allowed disabled:opacity-60`}
                                     />
                                 </div>
                             </Field>
@@ -443,12 +535,22 @@ export default function SettingsForm({
                                         aria-invalid={Boolean(
                                             fieldErrors.websiteUrl,
                                         )}
-                                        className={`${inputClass} pl-9 disabled:cursor-not-allowed disabled:opacity-60`}
+                                        aria-describedby={
+                                            fieldErrors.websiteUrl
+                                                ? 'websiteUrl-feedback'
+                                                : undefined
+                                        }
+                                        className={`${inputClass} ${
+                                            fieldErrors.websiteUrl
+                                                ? errorInputClass
+                                                : ''
+                                        } pl-9 disabled:cursor-not-allowed disabled:opacity-60`}
                                     />
                                 </div>
                             </Field>
 
                             <div className="grid gap-5 sm:grid-cols-2">
+
                                 <Field
                                     label="Phone"
                                     htmlFor="phone"
@@ -476,7 +578,16 @@ export default function SettingsForm({
                                         aria-invalid={Boolean(
                                             fieldErrors.phone,
                                         )}
-                                        className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-60`}
+                                        aria-describedby={
+                                            fieldErrors.phone
+                                                ? 'phone-feedback'
+                                                : undefined
+                                        }
+                                        className={`${inputClass} ${
+                                            fieldErrors.phone
+                                                ? errorInputClass
+                                                : ''
+                                        } disabled:cursor-not-allowed disabled:opacity-60`}
                                     />
                                 </Field>
 
@@ -506,9 +617,19 @@ export default function SettingsForm({
                                         aria-invalid={Boolean(
                                             fieldErrors.email,
                                         )}
-                                        className={`${inputClass} disabled:cursor-not-allowed disabled:opacity-60`}
+                                        aria-describedby={
+                                            fieldErrors.email
+                                                ? 'email-feedback'
+                                                : undefined
+                                        }
+                                        className={`${inputClass} ${
+                                            fieldErrors.email
+                                                ? errorInputClass
+                                                : ''
+                                        } disabled:cursor-not-allowed disabled:opacity-60`}
                                     />
                                 </Field>
+
                             </div>
                         </div>
                     </Section>
@@ -525,6 +646,7 @@ export default function SettingsForm({
                         description="Optional. Leave a field blank to keep that social link hidden."
                     >
                         <div className="grid gap-4 sm:grid-cols-2">
+
                             <SocialField
                                 icon={
                                     <SiFacebook className="h-4 w-4" />
@@ -536,6 +658,11 @@ export default function SettingsForm({
                                 }
                                 placeholder="https://facebook.com/..."
                                 disabled={isPending}
+                                error={
+                                    fieldErrors[
+                                        'social.facebook'
+                                    ]
+                                }
                                 onChange={(value) =>
                                     setSocial(
                                         'facebook',
@@ -555,6 +682,11 @@ export default function SettingsForm({
                                 }
                                 placeholder="https://instagram.com/..."
                                 disabled={isPending}
+                                error={
+                                    fieldErrors[
+                                        'social.instagram'
+                                    ]
+                                }
                                 onChange={(value) =>
                                     setSocial(
                                         'instagram',
@@ -574,6 +706,11 @@ export default function SettingsForm({
                                 }
                                 placeholder="https://wa.me/..."
                                 disabled={isPending}
+                                error={
+                                    fieldErrors[
+                                        'social.whatsapp'
+                                    ]
+                                }
                                 onChange={(value) =>
                                     setSocial(
                                         'whatsapp',
@@ -593,6 +730,11 @@ export default function SettingsForm({
                                 }
                                 placeholder="https://x.com/..."
                                 disabled={isPending}
+                                error={
+                                    fieldErrors[
+                                        'social.twitter'
+                                    ]
+                                }
                                 onChange={(value) =>
                                     setSocial(
                                         'twitter',
@@ -600,6 +742,7 @@ export default function SettingsForm({
                                     )
                                 }
                             />
+
                         </div>
                     </Section>
 
@@ -623,6 +766,7 @@ export default function SettingsForm({
                         >
                             <div className="w-full sm:max-w-sm">
                                 <div className="relative">
+
                                     <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm font-semibold text-amber-700">
                                         {DEFAULT_CURRENCY ===
                                         'USD'
@@ -653,8 +797,18 @@ export default function SettingsForm({
                                         aria-invalid={Boolean(
                                             fieldErrors.shippingCost,
                                         )}
-                                        className={`${inputClass} pl-8 font-medium disabled:cursor-not-allowed disabled:opacity-60`}
+                                        aria-describedby={
+                                            fieldErrors.shippingCost
+                                                ? 'shippingCost-feedback'
+                                                : undefined
+                                        }
+                                        className={`${inputClass} ${
+                                            fieldErrors.shippingCost
+                                                ? errorInputClass
+                                                : ''
+                                        } pl-8 font-medium disabled:cursor-not-allowed disabled:opacity-60`}
                                     />
+
                                 </div>
                             </div>
                         </Field>
@@ -674,6 +828,7 @@ export default function SettingsForm({
 
                     <div className="border-t border-orange-100 bg-[#fffaf6] px-4 py-4 sm:px-6 lg:px-8">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+
                             <div className="min-w-0">
                                 <p className="text-sm font-medium text-slate-800">
                                     Store settings
@@ -700,8 +855,10 @@ export default function SettingsForm({
                                     ? 'Saving…'
                                     : 'Save changes'}
                             </button>
+
                         </div>
                     </div>
+
                 </div>
             </form>
         </div>
@@ -714,6 +871,13 @@ export default function SettingsForm({
 
 const inputClass =
     'block w-full rounded-xl border border-orange-100 bg-[#fffaf6] px-3 py-2.5 text-sm leading-5 text-slate-900 outline-none placeholder:text-slate-400 transition-all duration-200 hover:border-orange-200 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-500/10';
+
+const errorInputClass =
+    'border-red-300 bg-red-50/30 hover:border-red-400 focus:border-red-400 focus:ring-red-500/10';
+
+/* ============================================================
+   Section
+============================================================ */
 
 function Section({
     icon,
@@ -728,12 +892,15 @@ function Section({
 }) {
     return (
         <section className="grid gap-6 border-b border-orange-100 px-4 py-7 sm:px-6 sm:py-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-10 lg:px-8">
+
             <div className="flex items-start gap-3">
+
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-amber-200/70 bg-amber-50 text-amber-700">
                     {icon}
                 </div>
 
                 <div className="min-w-0">
+
                     <h2 className="text-sm font-semibold tracking-tight text-slate-900">
                         {title}
                     </h2>
@@ -743,15 +910,21 @@ function Section({
                             {description}
                         </p>
                     )}
+
                 </div>
             </div>
 
             <div className="min-w-0">
                 {children}
             </div>
+
         </section>
     );
 }
+
+/* ============================================================
+   Field
+============================================================ */
 
 function Field({
     label,
@@ -766,8 +939,12 @@ function Field({
     error?: string;
     children: ReactNode;
 }) {
+    const feedbackId =
+        `${htmlFor}-feedback`;
+
     return (
         <div className="min-w-0">
+
             <label
                 htmlFor={htmlFor}
                 className="block text-[13px] font-semibold text-slate-800"
@@ -780,7 +957,10 @@ function Field({
             </div>
 
             {error ? (
-                <p className="mt-1.5 text-xs font-medium leading-4 text-red-600">
+                <p
+                    id={feedbackId}
+                    className="mt-1.5 text-xs font-medium leading-4 text-red-600"
+                >
                     {error}
                 </p>
             ) : hint ? (
@@ -788,9 +968,14 @@ function Field({
                     {hint}
                 </p>
             ) : null}
+
         </div>
     );
 }
+
+/* ============================================================
+   Social Field
+============================================================ */
 
 function SocialField({
     icon,
@@ -799,6 +984,7 @@ function SocialField({
     value,
     placeholder,
     disabled,
+    error,
     onChange,
 }: {
     icon: ReactNode;
@@ -807,10 +993,15 @@ function SocialField({
     value: string;
     placeholder: string;
     disabled?: boolean;
+    error?: string;
     onChange: (value: string) => void;
 }) {
+    const feedbackId =
+        `${htmlFor}-feedback`;
+
     return (
         <div className="min-w-0">
+
             <label
                 htmlFor={htmlFor}
                 className="block text-[13px] font-semibold text-slate-800"
@@ -819,6 +1010,7 @@ function SocialField({
             </label>
 
             <div className="relative mt-2">
+
                 <span className="pointer-events-none absolute left-3 top-1/2 flex -translate-y-1/2 text-slate-400">
                     {icon}
                 </span>
@@ -835,12 +1027,37 @@ function SocialField({
                     }
                     placeholder={placeholder}
                     disabled={disabled}
-                    className={`${inputClass} pl-9 disabled:cursor-not-allowed disabled:opacity-60`}
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={
+                        error
+                            ? feedbackId
+                            : undefined
+                    }
+                    className={`${inputClass} pl-9 ${
+                        error
+                            ? errorInputClass
+                            : ''
+                    } disabled:cursor-not-allowed disabled:opacity-60`}
                 />
+
             </div>
+
+            {error ? (
+                <p
+                    id={feedbackId}
+                    className="mt-1.5 text-xs font-medium leading-4 text-red-600"
+                >
+                    {error}
+                </p>
+            ) : null}
+
         </div>
     );
 }
+
+/* ============================================================
+   Logo Preview
+============================================================ */
 
 function LogoPreview({
     url,
@@ -857,6 +1074,7 @@ function LogoPreview({
 
     return (
         <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-amber-200 bg-white shadow-sm sm:h-16 sm:w-16">
+
             <div className="absolute inset-1 rounded-lg border border-amber-100" />
 
             {showFallback ? (
@@ -874,9 +1092,14 @@ function LogoPreview({
                     }
                 />
             )}
+
         </div>
     );
 }
+
+/* ============================================================
+   Spinner
+============================================================ */
 
 function Spinner() {
     return (

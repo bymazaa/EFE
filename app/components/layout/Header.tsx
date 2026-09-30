@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -14,12 +13,13 @@ import {
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-
 import { useCartCount } from '@/store/cart.store';
 
 const NAV_ITEMS = [
     { href: '/', label: 'Home' },
     { href: '/products', label: 'Products' },
+    { href: '/order-status', label: 'Status' },
+    { href: '/size-guide', label: 'Size Guide' },
     { href: '/about', label: 'About' },
     { href: '/contact', label: 'Contact' },
 ] as const;
@@ -46,15 +46,14 @@ export function Header({
     return (
         <header className="sticky top-0 z-40 border-b border-orange-100/80 bg-[#fffaf6]/90 shadow-sm shadow-orange-100/30 backdrop-blur-xl">
             <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-                {/* ================================================= */}
+
+                {/* ================================================== */}
                 {/* Logo */}
-                {/* ================================================= */}
+                {/* ================================================== */}
 
                 <Link
                     href="/"
-                    onClick={() =>
-                        setIsMenuOpen(false)
-                    }
+                    onClick={() => setIsMenuOpen(false)}
                     className="group flex items-center gap-2.5"
                 >
                     {logoUrl ? (
@@ -78,9 +77,9 @@ export function Header({
                     </span>
                 </Link>
 
-                {/* ================================================= */}
+                {/* ================================================== */}
                 {/* Desktop Navigation */}
-                {/* ================================================= */}
+                {/* ================================================== */}
 
                 <nav className="hidden items-center gap-8 md:flex">
                     {NAV_ITEMS.map(
@@ -115,11 +114,20 @@ export function Header({
                     )}
                 </nav>
 
-                {/* ================================================= */}
+                {/* ================================================== */}
                 {/* Right Actions */}
-                {/* ================================================= */}
+                {/* ================================================== */}
 
                 <div className="flex items-center gap-1.5">
+
+                    {/* Go Admin */}
+                    <Link
+                        href="/admin"
+                        className="hidden rounded-xl px-3 py-2 text-[14px] font-semibold text-chocolate-soft transition-all duration-200 hover:bg-orange-50 hover:text-chocolate sm:flex"
+                    >
+                        Go Admin
+                    </Link>
+
                     {/* Cart */}
                     <Link
                         href="/cart"
@@ -173,9 +181,9 @@ export function Header({
                 </div>
             </div>
 
-            {/* ================================================= */}
+            {/* ================================================== */}
             {/* Mobile Navigation */}
-            {/* ================================================= */}
+            {/* ================================================== */}
 
             <div
                 className={cn(
@@ -187,6 +195,7 @@ export function Header({
             >
                 <nav className="mx-auto max-w-7xl px-4 py-3 sm:px-6">
                     <div className="rounded-2xl border border-orange-100 bg-white p-2 shadow-2xl shadow-gray-50">
+
                         {NAV_ITEMS.map(
                             ({
                                 href,
@@ -198,9 +207,7 @@ export function Header({
                                 return (
                                     <Link
                                         key={href}
-                                        href={
-                                            href
-                                        }
+                                        href={href}
                                         onClick={() =>
                                             setIsMenuOpen(
                                                 false,
@@ -214,9 +221,7 @@ export function Header({
                                         )}
                                     >
                                         <span>
-                                            {
-                                                label
-                                            }
+                                            {label}
                                         </span>
 
                                         {active ? (
@@ -226,6 +231,17 @@ export function Header({
                                 );
                             },
                         )}
+
+                        {/* Mobile Go Admin */}
+                        <Link
+                            href="/admin"
+                            onClick={() =>
+                                setIsMenuOpen(false)
+                            }
+                            className="mt-1 flex items-center justify-between rounded-xl px-4 py-3 text-[15px] font-semibold text-chocolate-soft transition-all duration-200 hover:bg-gray-50 hover:text-chocolate"
+                        >
+                            <span>Go Admin</span>
+                        </Link>
                     </div>
                 </nav>
             </div>

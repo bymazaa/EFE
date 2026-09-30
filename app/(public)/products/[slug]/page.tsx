@@ -37,7 +37,7 @@ export async function generateMetadata({
 
         description:
             product.description ||
-            `${product.name} - hand-poured soy candle.`,
+            `${product.name} - premium streetwear piece.`,
 
         alternates: {
             canonical: `/products/${product.slug}`,
@@ -48,7 +48,7 @@ export async function generateMetadata({
 
             description:
                 product.description ||
-                `${product.name} - hand-poured soy candle.`,
+                `${product.name} - premium streetwear piece.`,
 
             images: product.images[0]
                 ? [
@@ -111,7 +111,7 @@ export default async function ProductDetailsPage({
                         <div className="mb-4 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em] text-orange-600">
                             <Sparkles className="h-3.5 w-3.5" />
 
-                            Hand-poured soy candle
+                            Premium streetwear
                         </div>
 
                         {/* Title */}
@@ -186,7 +186,7 @@ export default async function ProductDetailsPage({
                                 <Sparkles className="h-4 w-4 shrink-0 text-orange-500" />
 
                                 <span className="text-xs font-medium text-chocolate-soft">
-                                    Handcrafted
+                                    Premium fabric
                                 </span>
                             </div>
 
@@ -207,7 +207,7 @@ export default async function ProductDetailsPage({
                             </p>
 
                             <h2 className="mt-2 font-serif text-2xl text-chocolate sm:text-3xl">
-                                About this candle
+                                About this piece
                             </h2>
 
                             <p className="mt-5 whitespace-pre-line text-sm leading-7 text-chocolate-soft sm:text-[15px] sm:leading-8">

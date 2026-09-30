@@ -4,25 +4,25 @@ import { getActiveProducts } from '@/services/product.service';
 import { ProductGrid } from '@/app/components/products/productGrid';
 
 export const metadata: Metadata = {
-    title: 'Shop Candles',
+    title: 'Shop Streetwear',
     description:
-        'Browse Quiet Flame Co. handcrafted soy candles made in small batches with premium fragrances for everyday moments.',
+        'Browse EFE luxury streetwear, including premium unisex wool jackets and graphic sweatshirts crafted in limited batches for everyday style.',
 
     alternates: {
         canonical: '/products',
     },
 
     openGraph: {
-        title: 'Shop Candles | Quiet Flame Co.',
+        title: 'Shop Streetwear | EFE',
         description:
-            'Explore handcrafted soy candles from Quiet Flame Co., made in small batches with premium fragrances.',
+            'Explore premium wool jackets, graphic sweatshirts, and everyday essentials from EFE, crafted in limited batches with quality fabrics.',
         url: '/products',
         images: [
             {
                 url: '/candle6.jpg',
                 width: 1200,
                 height: 630,
-                alt: 'Quiet Flame Co. handcrafted soy candles',
+                alt: 'EFE luxury streetwear collection',
             },
         ],
     },
@@ -35,11 +35,11 @@ export default async function ProductsPage() {
         <div className="mx-auto max-w-7xl px-2 py-12 sm:px-6 sm:py-16 lg:px-8">
             <div className="mb-8 text-center">
                 <h1 className="font-serif text-3xl text-chocolate sm:text-4xl">
-                    Our Candles
+                    Our Streetwear
                 </h1>
 
                 <p className="mt-2 text-sm text-chocolate-soft">
-                    Hand-poured in small batches, one jar at a time.
+                    Crafted in limited batches, one piece at a time.
                 </p>
             </div>
 

@@ -34,8 +34,7 @@ async function sendPasswordResetEmail({
     email: string;
     resetUrl: string;
 }) {
-    console.log('Password reset URL:', resetUrl);
-
+ 
     const apiKey = process.env.RESEND_API_KEY;
     const fromEmail = process.env.MAIL_FROM;
 

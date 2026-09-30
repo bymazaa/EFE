@@ -1,35 +1,34 @@
-
 import {
-    Flower2,
-    HandHeart,
-    Leaf,
+    Gem,
+    Scissors,
+    Shirt,
     Sparkles,
 } from 'lucide-react';
 
 const FEATURES = [
     {
-        title: '100% Soy Wax',
+        title: 'Premium Fabrics',
         description:
-            'Made with premium soy wax for a cleaner and slower burn you can enjoy longer.',
-        icon: Leaf,
+            'Made with premium wool and quality fabrics for a soft feel and lasting comfort.',
+        icon: Gem,
     },
     {
-        title: 'Small Batch Crafted',
+        title: 'Limited Batches',
         description:
-            'Every candle is carefully hand-poured in small batches with attention to detail.',
-        icon: HandHeart,
+            'Every piece is produced in limited batches with attention to detail and finish.',
+        icon: Shirt,
     },
     {
-        title: 'Clean Burning',
+        title: 'Modern Streetwear Fit',
         description:
-            'Thoughtfully selected ingredients and fragrances made for a comfortable everyday experience.',
+            'Unisex cuts and designs made to move with you, from morning to night.',
         icon: Sparkles,
     },
     {
         title: 'Made with Care',
         description:
-            'From the first pour to the final package, every candle is created with intention.',
-        icon: Flower2,
+            'From the first stitch to the final package, every piece is made with intention.',
+        icon: Scissors,
     },
 ] as const;
 
@@ -49,16 +48,16 @@ export function WhyChooseUs() {
                     </span>
 
                     <h2 className="mt-5 font-serif text-3xl leading-tight text-chocolate sm:text-4xl">
-                        Thoughtfully made for
+                        Thoughtfully designed for
                         <span className="text-orange-600">
-                            {' '}everyday moments
+                            {' '}everyday style
                         </span>
                     </h2>
 
                     <p className="mt-4 text-[15px] leading-7 text-chocolate-soft">
-                        We believe a good candle should feel just
-                        as beautiful as the moment it creates.
-                        That&apos;s why every detail matters.
+                        We believe great streetwear should feel
+                        as good as it looks. That&apos;s why every
+                        detail matters.
                     </p>
                 </div>
 
@@ -97,10 +96,10 @@ export function WhyChooseUs() {
                 <div className="mx-auto mt-12 max-w-3xl rounded-3xl border border-orange-100 bg-orange-50/70 px-6 py-5 text-center shadow-2xl shadow-gray-50 sm:px-8">
                     <p className="text-sm leading-6 text-chocolate-soft">
                         <span className="font-semibold text-chocolate">
-                            Hand-poured with intention.
+                            Crafted with intention.
                         </span>{' '}
-                        Designed to bring a little more warmth,
-                        calm, and beauty into your everyday space.
+                        Designed to bring a little more confidence,
+                        comfort, and style into your everyday wardrobe.
                     </p>
                 </div>
             </div>

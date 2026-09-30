@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
 import { buttonVariants } from '@/app/components/ui/Button';
+import { categoryName } from '@/lib/constants';
 
 export function Hero({
     brandName,
@@ -30,18 +31,14 @@ export function Hero({
                     </div>
 
                     <h1 className="mt-6 text-balance font-serif text-4xl leading-[1.08] tracking-tight text-chocolate sm:text-5xl lg:text-6xl">
-                        Handcrafted Candles for
+                         Premium Streetwear for 
                         <span className="block text-orange-600">
-                            Everyday Moments
+                           Everyday Style
                         </span>
                     </h1>
 
                     <p className="mt-6 max-w-lg text-[15px] leading-7 text-chocolate-soft sm:text-base">
-                        Hand-poured in small batches with
-                        premium soy wax and clean-burning
-                        fragrances, thoughtfully made to bring
-                        warmth, calm, and comfort into your
-                        everyday moments.
+                       Crafted in limited batches with premium fabrics and refined finishing, thoughtfully designed to bring confidence, comfort, and style into your everyday moments.
                     </p>
 
                     <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -53,7 +50,7 @@ export function Hero({
                                     'group rounded-2xl px-6 shadow-lg shadow-orange-100',
                             })}
                         >
-                            Shop Candles
+                            Shop {categoryName}
 
                             <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                         </Link>
@@ -106,7 +103,7 @@ export function Hero({
                     <div className="relative overflow-hidden rounded-[2rem] border border-orange-100 bg-white p-2 shadow-2xl shadow-orange-100/50">
                         <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-orange-50">
                             <Image
-                                src="/candle2.jpg"
+                                src="/0445b4_9a1dd1a2896a4bda98208c9d30cebc0b~mv2.webp"
                                 alt="Handcrafted candle"
                                 fill
                                 priority

@@ -387,7 +387,7 @@ export function PrintInvoice({
                                 </span>
                             </div>
 
-                            <div className="flex items-center justify-between gap-5">
+                            {/* <div className="flex items-center justify-between gap-5">
                                 <span className="text-gray-500">
                                     Discount
                                 </span>
@@ -399,7 +399,7 @@ export function PrintInvoice({
                                         order.currency,
                                     )}
                                 </span>
-                            </div>
+                            </div> */}
 
                             <div className="flex items-center justify-between gap-5">
                                 <span className="text-gray-500">

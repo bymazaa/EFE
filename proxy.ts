@@ -5,35 +5,43 @@ import {
 
 import { connectDB } from '@/lib/mongodb';
 import { Admin } from '@/models/Admin';
-
 import { verifyToken } from '@/lib/token';
-
 import { SESSION_COOKIE } from './lib/constants';
 
-// Next.js 16:
-// middleware.ts -> proxy.ts
+// *Next.js 16:*
+
+// *middleware.ts -> proxy.ts*
+
 //
-// Proxy is the first authentication gate.
-// It checks:
-// - JWT
-// - admin existence
-// - tokenVersion
-// - account status
+// *Proxy is the first authentication gate.*
 //
-// Real authorization still remains in
-// requireAdmin() / Server Actions as defense in depth.
+// *It checks:*
+// *- JWT*
+// *- admin existence*
+// *- tokenVersion*
+// *- account status*
+//
+// *Real authorization still remains in*
+// *requireAdmin() / Server Actions as defense in depth.
+//
 
 const LOGIN_PATH = '/admin/login';
+const RESET_PASSWORD_PATH = '/admin/reset-password';
 const ADMIN_HOME_PATH = '/admin';
 
 export async function proxy(
     request: NextRequest,
 ) {
-    const { pathname } =
-        request.nextUrl;
+    const { pathname } = request.nextUrl;
 
     const isLoginPage =
         pathname === LOGIN_PATH;
+
+    const isResetPasswordPage =
+        pathname === RESET_PASSWORD_PATH;
+
+    const isPublicAdminPage =
+        isLoginPage || isResetPasswordPage;
 
     const token =
         request.cookies.get(
@@ -46,11 +54,13 @@ export async function proxy(
     /*
      * No valid session.
      *
-     * Login page can continue normally.
+     * Login page and reset-password page
+     * can continue normally.
+     *
      * Any other /admin route goes to login.
      */
     if (!session) {
-        if (isLoginPage) {
+        if (isPublicAdminPage) {
             return NextResponse.next();
         }
 
@@ -62,7 +72,7 @@ export async function proxy(
                 ),
             );
 
-        // Clean up an invalid/stale cookie.
+        // *Clean up an invalid/stale cookie.*
         response.cookies.delete(
             SESSION_COOKIE,
         );
@@ -87,7 +97,7 @@ export async function proxy(
          */
         if (!admin) {
             const response =
-                isLoginPage
+                isPublicAdminPage
                     ? NextResponse.next()
                     : NextResponse.redirect(
                           new URL(
@@ -112,7 +122,7 @@ export async function proxy(
             session.tokenVersion
         ) {
             const response =
-                isLoginPage
+                isPublicAdminPage
                     ? NextResponse.next()
                     : NextResponse.redirect(
                           new URL(
@@ -136,7 +146,7 @@ export async function proxy(
          */
         if (admin.status !== 'active') {
             const response =
-                isLoginPage
+                isPublicAdminPage
                     ? NextResponse.next()
                     : NextResponse.redirect(
                           new URL(
@@ -167,12 +177,21 @@ export async function proxy(
             );
         }
 
+        /*
+         * Reset-password page must remain accessible
+         * even when the user already has a valid session.
+         */
+        if (isResetPasswordPage) {
+            return NextResponse.next();
+        }
+
         return NextResponse.next();
     } catch (error) {
         /*
          * Database / infrastructure error.
          *
          * Fail closed for protected admin routes.
+         *
          * We do NOT destroy a potentially valid session
          * just because MongoDB temporarily failed.
          */
@@ -181,7 +200,11 @@ export async function proxy(
             error,
         );
 
-        if (isLoginPage) {
+        /*
+         * Public admin pages can continue normally
+         * even if database verification fails.
+         */
+        if (isPublicAdminPage) {
             return NextResponse.next();
         }
 

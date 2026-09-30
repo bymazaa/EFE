@@ -11,15 +11,15 @@ export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export const DEFAULT_CURRENCY = 'USD';
 
-export const ORDER_NUMBER_PREFIX = 'QF';
+export const ORDER_NUMBER_PREFIX = 'EFE';
 export const ORDER_NUMBER_START = 10000;
 
 // Constants for authentication and session management.
-export const SESSION_COOKIE = 'qf_admin_session';
+export const SESSION_COOKIE = 'efe_admin_session';
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days (seconds)
 
 // purpouse 
-export const printHeightLightPoint="Handcrafted Candles"
-export const categoryName="Candles";
+export const printHeightLightPoint="Luxury Streetwear"
+export const categoryName="Streetwear";
 
 export const RESET_TOKEN_EXPIRES_IN_MS = 15 * 60 * 1000;

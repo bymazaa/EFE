@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 
 import Image from 'next/image';
@@ -16,27 +15,26 @@ import {
 
 import { getSettings } from '@/services/settings.service';
 
-
 export const metadata: Metadata = {
     title: 'About Us',
     description:
-        'Learn the story behind Quiet Flame Co. and discover why we create handcrafted soy candles with thoughtful ingredients and care.',
+        'Learn the story behind our brand and discover why we create thoughtful streetwear with quality, style, and care.',
 
     alternates: {
         canonical: '/about',
     },
 
     openGraph: {
-        title: 'About Quiet Flame Co.',
+        title: 'About Our Brand',
         description:
-            'Discover the story, values, and craftsmanship behind Quiet Flame Co. handcrafted soy candles.',
+            'Discover the story, values, and craftsmanship behind our streetwear collection.',
         url: '/about',
         images: [
             {
                 url: '/candle8.jpg',
                 width: 1200,
                 height: 630,
-                alt: 'Quiet Flame Co. handcrafted candle',
+                alt: 'Our streetwear collection',
             },
         ],
     },
@@ -44,21 +42,21 @@ export const metadata: Metadata = {
 
 const VALUES = [
     {
-        title: 'Thoughtful Ingredients',
+        title: 'Thoughtful Design',
         description:
-            'We carefully choose waxes, fragrances, and materials with quality and everyday comfort in mind.',
+            'We carefully choose fabrics, colors, and details with quality, comfort, and everyday style in mind.',
         icon: Leaf,
     },
     {
-        title: 'Made by Hand',
+        title: 'Made with Care',
         description:
-            'Our candles are poured in small batches so every piece receives the attention it deserves.',
+            'Every piece is selected and finished with attention to detail so it feels right from the first wear.',
         icon: HandHeart,
     },
     {
         title: 'Created with Intention',
         description:
-            'Every fragrance and detail is selected to help create warm, calm, and memorable spaces.',
+            'Every design is made to bring confidence, character, and a distinct sense of style to your everyday look.',
         icon: Sparkles,
     },
 ];
@@ -66,23 +64,23 @@ const VALUES = [
 const PROCESS = [
     {
         number: '01',
-        title: 'Choose the blend',
+        title: 'Choose the design',
         description:
-            'We carefully develop fragrance combinations designed to feel balanced and inviting.',
+            'We carefully develop designs that feel modern, comfortable, and easy to wear.',
         icon: Sparkles,
     },
     {
         number: '02',
-        title: 'Hand pour',
+        title: 'Craft the piece',
         description:
-            'Each candle is poured in small batches and given time to settle naturally.',
+            'Each piece is prepared with attention to fit, materials, and the details that make it stand out.',
         icon: Flame,
     },
     {
         number: '03',
         title: 'Finish with care',
         description:
-            'Every candle is checked, finished, packaged, and prepared before it reaches you.',
+            'Every item is checked, finished, packaged, and prepared before it reaches you.',
         icon: PackageCheck,
     },
 ];
@@ -111,17 +109,16 @@ export default async function AboutPage() {
                     </span>
 
                     <h1 className="mx-auto mt-6 max-w-4xl font-serif text-4xl leading-[1.08] tracking-tight text-chocolate sm:text-5xl lg:text-6xl">
-                        We believe small moments
+                        We believe everyday style
                         <span className="text-orange-600">
-                            {' '}deserve a little more warmth.
+                            {' '}deserves a little more character.
                         </span>
                     </h1>
 
                     <p className="mx-auto mt-6 max-w-2xl text-[15px] leading-7 text-chocolate-soft sm:text-base">
                         {brandName} was created around a simple idea:
-                        everyday life feels better when we slow down,
-                        light a candle, and make space for the moments
-                        that matter.
+                        everyday life feels better when what you wear feels
+                        comfortable, confident, and true to your style.
                     </p>
                 </div>
             </section>
@@ -133,56 +130,55 @@ export default async function AboutPage() {
             <section className="border-b border-orange-100 bg-white">
                 <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 py-20 sm:px-6 sm:py-24 lg:grid-cols-2 lg:gap-20 lg:px-8">
                     {/* Image */}
-                    <div className="relative">
-                        <div className="absolute -inset-5 rounded-[3rem] bg-orange-200/30 blur-2xl" />
+                 <div className="relative">
+    <div className="absolute -inset-5 rounded-[3rem] bg-orange-200/30 blur-2xl" />
 
-                        <div className="relative overflow-hidden rounded-[2rem] border border-orange-100 bg-white p-2 shadow-2xl shadow-gray-100">
-                            <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem]">
-                                <Image
-                                    src="/candle6.jpg"
-                                    alt={`${brandName} candle making`}
-                                    fill
-                                    sizes="(max-width: 1024px) 100vw, 50vw"
-                                    className="object-cover"
-                                />
+    <div className="relative overflow-hidden rounded-[2rem] border border-orange-100 bg-white p-2 shadow-2xl shadow-gray-100">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-orange-50">
+            <Image
+                src="/0445b4_05aad7afa7084f70abef792b88dad929~mv2.avif"
+                alt={`${brandName} streetwear collection`}
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-contain transition duration-700 hover:scale-105"
+            />
 
-                                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent p-6">
-                                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/75">
-                                        Behind the brand
-                                    </p>
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/75">
+                    Behind the brand
+                </p>
 
-                                    <p className="mt-2 max-w-xs font-serif text-2xl leading-tight text-white">
-                                        Slow craft.
-                                        <br />
-                                        Simple beauty.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                <p className="mt-2 max-w-xs font-serif text-2xl leading-tight text-white">
+                    Simple design.
+                    <br />
+                    Everyday style.
+                </p>
+            </div>
+        </div>
+    </div>
 
-                        <div className="absolute -bottom-5 -right-3 rounded-2xl border border-orange-100 bg-white px-4 py-3 shadow-xl shadow-gray-100 sm:-right-5">
-                            <div className="flex items-center gap-2">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-50 text-orange-500">
-                                    <Heart
-                                        className="h-4 w-4"
-                                        fill="currentColor"
-                                        strokeWidth={1.5}
-                                    />
-                                </div>
+    <div className="absolute -bottom-5 -right-3 rounded-2xl border border-orange-100 bg-white px-4 py-3 shadow-xl shadow-gray-100 sm:-right-5">
+        <div className="flex items-center gap-2">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-orange-50 text-orange-500">
+                <Heart
+                    className="h-4 w-4"
+                    fill="currentColor"
+                    strokeWidth={1.5}
+                />
+            </div>
 
-                                <div>
-                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-orange-500">
-                                        Crafted
-                                    </p>
+            <div>
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-orange-500">
+                    Crafted
+                </p>
 
-                                    <p className="text-sm font-semibold text-chocolate">
-                                        With care
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+                <p className="text-sm font-semibold text-chocolate">
+                    With care
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
                     {/* Story */}
                     <div className="max-w-xl">
                         <span className="text-xs font-bold uppercase tracking-[0.16em] text-orange-600">
@@ -190,7 +186,7 @@ export default async function AboutPage() {
                         </span>
 
                         <h2 className="mt-4 font-serif text-3xl leading-tight text-chocolate sm:text-4xl">
-                            More than a candle.
+                            More than clothing.
                             <span className="block text-orange-600">
                                 A feeling.
                             </span>
@@ -198,37 +194,34 @@ export default async function AboutPage() {
 
                         <div className="mt-6 space-y-5 text-[15px] leading-7 text-chocolate-soft">
                             <p>
-                                {brandName} began with a love for warm
-                                light, beautiful fragrance, and the
-                                quiet moments that often go unnoticed.
+                                {brandName} began with a love for modern
+                                streetwear, clean design, and the everyday
+                                moments that shape personal style.
                             </p>
 
                             <p>
-                                We wanted to create candles that do
-                                more than fill a room with fragrance.
-                                We wanted them to become part of the
-                                rituals people already love — slow
-                                mornings, peaceful evenings, dinner with
-                                family, reading a book, or simply taking
-                                a moment to breathe.
+                                We wanted to create clothing that does more
+                                than simply look good. We wanted each piece
+                                to become part of the way people dress,
+                                move, and express themselves.
                             </p>
 
                             <p>
-                                That idea guides everything we do.
-                                From the ingredients we choose to the
-                                way each candle is poured and packaged,
-                                every detail is approached with care.
+                                That idea guides everything we do. From the
+                                materials we choose to the way each piece is
+                                designed and packaged, every detail is
+                                approached with care.
                             </p>
                         </div>
 
                         <div className="mt-8 grid grid-cols-3 border-t border-orange-100 pt-6">
                             <div>
                                 <p className="font-serif text-2xl text-chocolate">
-                                    100%
+                                    Quality
                                 </p>
 
                                 <p className="mt-1 text-xs text-chocolate-muted">
-                                    Soy Wax
+                                    Materials
                                 </p>
                             </div>
 
@@ -238,17 +231,17 @@ export default async function AboutPage() {
                                 </p>
 
                                 <p className="mt-1 text-xs text-chocolate-muted">
-                                    Batch Made
+                                    Collections
                                 </p>
                             </div>
 
                             <div className="border-l border-orange-100 pl-4">
                                 <p className="font-serif text-2xl text-chocolate">
-                                    Clean
+                                    Everyday
                                 </p>
 
                                 <p className="mt-1 text-xs text-chocolate-muted">
-                                    Burning
+                                    Style
                                 </p>
                             </div>
                         </div>
@@ -275,9 +268,9 @@ export default async function AboutPage() {
                         </h2>
 
                         <p className="mt-4 text-[15px] leading-7 text-chocolate-soft">
-                            We keep our approach simple: thoughtful
-                            ingredients, careful craft, and products
-                            that feel good to bring into your space.
+                            We keep our approach simple: thoughtful design,
+                            quality materials, and products that feel good
+                            to wear every day.
                         </p>
                     </div>
 
@@ -327,16 +320,16 @@ export default async function AboutPage() {
                             </span>
 
                             <h2 className="mt-4 font-serif text-3xl leading-tight text-chocolate sm:text-4xl">
-                                From the first blend
+                                From the first idea
                                 <span className="block text-orange-600">
-                                    to the final glow.
+                                    to the final piece.
                                 </span>
                             </h2>
 
                             <p className="mt-5 text-[15px] leading-7 text-chocolate-soft">
                                 We keep the process intentional and
-                                hands-on, so every candle gets the
-                                attention it deserves.
+                                hands-on, so every piece gets the attention
+                                it deserves.
                             </p>
                         </div>
 
@@ -407,22 +400,21 @@ export default async function AboutPage() {
                         </p>
 
                         <h2 className="mx-auto mt-4 max-w-3xl font-serif text-3xl leading-tight text-chocolate sm:text-4xl">
-                            Create something beautiful enough
-                            to become part of someone&apos;s
-                            everyday life.
+                            Create something you&apos;ll want
+                            to wear again and again.
                         </h2>
 
                         <p className="mx-auto mt-5 max-w-2xl text-sm leading-7 text-chocolate-soft sm:text-[15px]">
                             That&apos;s what we keep coming back to —
-                            simple products, thoughtful craftsmanship,
-                            and little moments worth remembering.
+                            simple design, thoughtful details,
+                            and everyday pieces worth remembering.
                         </p>
 
                         <Link
                             href="/products"
                             className="mt-8 inline-flex items-center justify-center rounded-2xl bg-orange-500 px-7 py-3.5 text-sm font-bold text-white shadow-lg shadow-orange-200 transition hover:bg-orange-600"
                         >
-                            Explore Our Candles
+                            Explore Our Collection
                             <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
                     </div>
@@ -430,5 +422,4 @@ export default async function AboutPage() {
             </section>
         </main>
     );
-
 }

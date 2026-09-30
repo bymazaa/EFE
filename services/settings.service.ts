@@ -131,6 +131,7 @@ export async function updateSettings(
 ): Promise<ActionResult<SiteSettingsDTO>> {
     const parsed = siteSettingsSchema.safeParse(data);
 
+
     if (!parsed.success) {
         return validationFail(parsed.error);
     }

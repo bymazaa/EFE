@@ -1,4 +1,3 @@
-
 import Link from 'next/link';
 
 import { ArrowRight, Sparkles } from 'lucide-react';
@@ -31,20 +30,20 @@ export function FinalCTA({
                     </div>
 
                     <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-orange-600">
-                        Bring home a little warmth
+                        Elevate your everyday wardrobe
                     </p>
 
                     <h2 className="mx-auto mt-4 max-w-2xl font-serif text-3xl leading-tight text-chocolate sm:text-4xl lg:text-5xl">
-                        Make your everyday moments
+                        Make your everyday style
                         <span className="text-orange-600">
-                            {' '}feel a little more special.
+                            {' '}feel a little more confident.
                         </span>
                     </h2>
 
                     <p className="mx-auto mt-5 max-w-xl text-sm leading-7 text-chocolate-soft sm:text-[15px]">
-                        Discover thoughtfully handcrafted candles
-                        made to bring warmth, comfort, and beautiful
-                        fragrance into your space.
+                        Discover thoughtfully designed streetwear
+                        made to bring confidence, comfort, and
+                        timeless style into your everyday wardrobe.
                     </p>
 
                     <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
@@ -56,7 +55,7 @@ export function FinalCTA({
                                     'group rounded-2xl px-7 shadow-lg shadow-orange-200',
                             })}
                         >
-                            Shop Candles
+                            Shop Streetwear
 
                             <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                         </Link>
@@ -70,7 +69,7 @@ export function FinalCTA({
                     </div>
 
                     <p className="mt-6 text-xs text-chocolate-muted">
-                        Hand-poured by {brandName}
+                        Crafted by {brandName}
                     </p>
                 </div>
             </div>

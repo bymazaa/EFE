@@ -794,3 +794,37 @@ export async function getOrderByConfirmationToken(token: string): Promise<OrderD
 
     return order ? toOrderDTO(order) : null;
 }
+
+
+
+
+export async function getOrderByIdAndEmail(
+    orderId: string,
+    email: string,
+): Promise<OrderDTO | null> {
+
+
+    if (!orderId || !email) {
+        return null;
+    }
+
+    const normalizedEmail = email
+        .trim()
+        .toLowerCase();
+
+    if (!normalizedEmail) {
+        return null;
+    }
+
+    await connectDB();
+ 
+
+    const order = await Order.findOne({
+    orderNumber: orderId,
+        'customer.email': normalizedEmail,
+    }).lean<LeanOrder | null>();
+
+    return order
+        ? toOrderDTO(order)
+        : null;
+}
