@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 
 import type { ProductVariantDTO } from '@/services/product.service';
+import { LOW_STOCK_THRESHOLD } from '@/lib/constants';
 
-const LOW_STOCK_THRESHOLD = 10;
+
 
 type ProductInventoryProps = {
     variants: ProductVariantDTO[];

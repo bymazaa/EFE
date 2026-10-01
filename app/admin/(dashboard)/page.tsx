@@ -13,12 +13,19 @@ import {
 
 import {
     getDashboardSummary,
+    getInventoryAlertProducts,
     type DashboardRange,
 } from '@/services/dashboard.service';
 
 import { StatCard } from '@/app/components/admin/StatCard';
 
-import { DashboardDateFilter } from '@/app/components/admin/DashboardDateFilter';
+import {
+    DashboardDateFilter,
+} from '@/app/components/admin/DashboardDateFilter';
+
+import {
+    InventoryAlerts,
+} from '@/app/components/admin/InventoryAlerts';
 
 import { formatPrice } from '@/lib/utils';
 
@@ -28,12 +35,13 @@ export const metadata: Metadata = {
 
 interface DashboardPageProps {
     searchParams: Promise<
-        Record<
-            string,
-            string | string[] | undefined
-        >
+        Record<string, string | string[] | undefined>
     >;
 }
+
+/* ============================================================
+   Search Param Helpers
+============================================================ */
 
 function getParam(
     value:
@@ -88,29 +96,38 @@ function getRangeDescription(
     }
 }
 
+/* ============================================================
+   Dashboard Page
+============================================================ */
+
 export default async function AdminDashboardPage({
     searchParams,
 }: DashboardPageProps) {
-    const params =
-        await searchParams;
+    const params = await searchParams;
 
-    const range =
-        getValidRange(
-            getParam(params.range),
-        );
+    const range = getValidRange(
+        getParam(params.range),
+    );
 
-    const fromDate =
-        getParam(
-            params.fromDate,
-        );
+    const fromDate = getParam(
+        params.fromDate,
+    );
 
-    const toDate =
-        getParam(
-            params.toDate,
-        );
+    const toDate = getParam(
+        params.toDate,
+    );
 
-    const summary =
-        await getDashboardSummary({
+    /* ==========================================================
+       Dashboard Data
+
+       Summary and inventory alerts are loaded in parallel.
+    ========================================================== */
+
+    const [
+        summary,
+        inventoryProducts,
+    ] = await Promise.all([
+        getDashboardSummary({
             range,
             fromDate:
                 range === 'custom'
@@ -120,7 +137,10 @@ export default async function AdminDashboardPage({
                 range === 'custom'
                     ? toDate
                     : undefined,
-        });
+        }),
+
+        getInventoryAlertProducts(),
+    ]);
 
     return (
         <div className="w-full max-w-7xl space-y-7">
@@ -195,6 +215,11 @@ export default async function AdminDashboardPage({
             </div>
 
             {/* =====================================================
+                Inventory Alerts
+            ===================================================== */}
+
+        
+            {/* =====================================================
                 Orders
             ===================================================== */}
 
@@ -227,9 +252,7 @@ export default async function AdminDashboardPage({
                         icon={
                             <ShoppingBag
                                 className="h-4 w-4"
-                                strokeWidth={
-                                    1.75
-                                }
+                                strokeWidth={1.75}
                             />
                         }
                     />
@@ -243,9 +266,7 @@ export default async function AdminDashboardPage({
                         icon={
                             <Timer
                                 className="h-4 w-4"
-                                strokeWidth={
-                                    1.75
-                                }
+                                strokeWidth={1.75}
                             />
                         }
                     />
@@ -259,9 +280,7 @@ export default async function AdminDashboardPage({
                         icon={
                             <CircleCheck
                                 className="h-4 w-4"
-                                strokeWidth={
-                                    1.75
-                                }
+                                strokeWidth={1.75}
                             />
                         }
                     />
@@ -275,9 +294,7 @@ export default async function AdminDashboardPage({
                         icon={
                             <Truck
                                 className="h-4 w-4"
-                                strokeWidth={
-                                    1.75
-                                }
+                                strokeWidth={1.75}
                             />
                         }
                     />
@@ -291,9 +308,7 @@ export default async function AdminDashboardPage({
                         icon={
                             <XCircle
                                 className="h-4 w-4"
-                                strokeWidth={
-                                    1.75
-                                }
+                                strokeWidth={1.75}
                             />
                         }
                     />
@@ -334,9 +349,7 @@ export default async function AdminDashboardPage({
                         icon={
                             <DollarSign
                                 className="h-4 w-4"
-                                strokeWidth={
-                                    1.75
-                                }
+                                strokeWidth={1.75}
                             />
                         }
                     />
@@ -357,9 +370,7 @@ export default async function AdminDashboardPage({
                         icon={
                             <Clock
                                 className="h-4 w-4"
-                                strokeWidth={
-                                    1.75
-                                }
+                                strokeWidth={1.75}
                             />
                         }
                     />
@@ -399,9 +410,7 @@ export default async function AdminDashboardPage({
                         icon={
                             <Package
                                 className="h-4 w-4"
-                                strokeWidth={
-                                    1.75
-                                }
+                                strokeWidth={1.75}
                             />
                         }
                     />
@@ -415,14 +424,17 @@ export default async function AdminDashboardPage({
                         icon={
                             <CircleCheck
                                 className="h-4 w-4"
-                                strokeWidth={
-                                    1.75
-                                }
+                                strokeWidth={1.75}
                             />
                         }
                     />
                 </div>
             </section>
+
+                <InventoryAlerts
+                products={inventoryProducts}
+            />
+
         </div>
     );
 }

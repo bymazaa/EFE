@@ -4,6 +4,7 @@ import { Product } from '@/models/Product';
 import { Order } from '@/models/Order';
 
 import { roundMoney } from '@/lib/utils';
+import { LOW_STOCK_THRESHOLD } from '@/lib/constants';
 
 /* ============================================================
    Types
@@ -404,4 +405,53 @@ export async function getDashboardSummary(
             label: dateRange.label,
         },
     };
+}
+
+
+
+
+export interface DashboardInventoryProduct {
+    id: string;
+    name: string;
+    variants: Array<{
+        size: string;
+        stock: number;
+    }>;
+}
+
+export async function getInventoryAlertProducts(): Promise<
+    DashboardInventoryProduct[]
+> {
+    await connectDB();
+
+    const products = await Product.find(
+        {
+            deletedAt: null,
+            isActive: true,
+            variants: {
+                $elemMatch: {
+                    stock: {
+                        $lte: LOW_STOCK_THRESHOLD                             ,
+                    },
+                },
+            },
+        },
+        {
+            name: 1,
+            variants: 1,
+        },
+    )
+        .lean()
+        .exec();
+
+    return products.map((product) => ({
+        id: product._id.toString(),
+        name: product.name,
+        variants: (product.variants ?? []).map(
+            (variant) => ({
+                size: variant.size,
+                stock: variant.stock,
+            }),
+        ),
+    }));
 }
