@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -9,10 +10,7 @@ import {
 
 import { Send, X } from 'lucide-react';
 import { SiWhatsapp } from 'react-icons/si';
-
-const WHATSAPP_NUMBER =
-    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ??
-    '15551234567';
+import { toast } from 'sonner';
 
 const QUICK_MESSAGES = [
     'Hi! I have a question about an order.',
@@ -20,26 +18,52 @@ const QUICK_MESSAGES = [
     'I want to know about shipping.',
 ];
 
-export function WhatsAppChat() {
+interface WhatsAppChatProps {
+    whatsappNumber: string;
+}
+
+export function WhatsAppChat({
+    whatsappNumber,
+}: WhatsAppChatProps) {
+    const normalizedNumber =
+        whatsappNumber?.replace(/\D/g, '') || '';
+
     const [isOpen, setIsOpen] = useState(false);
     const [message, setMessage] = useState('');
 
-    const panelRef =
-        useRef<HTMLDivElement>(null);
+    const panelRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
 
-    const inputRef =
-        useRef<HTMLTextAreaElement>(null);
+    /**
+     * =========================================================
+     * Toggle chat
+     * =========================================================
+     */
+    function handleToggle() {
+        if (!normalizedNumber) {
+            toast.warning(
+                'WhatsApp is not configured.',
+                {
+                    description:
+                        'Please add a valid WhatsApp number in your site settings.',
+                },
+            );
 
-    /* =========================================================
-       Close on outside click
-    ========================================================= */
+            return;
+        }
 
+        setIsOpen((value) => !value);
+    }
+
+    /**
+     * =========================================================
+     * Close on outside click
+     * =========================================================
+     */
     useEffect(() => {
         if (!isOpen) return;
 
-        const handleMouseDown = (
-            event: MouseEvent,
-        ) => {
+        const handleMouseDown = (event: MouseEvent) => {
             if (
                 panelRef.current &&
                 !panelRef.current.contains(
@@ -63,10 +87,11 @@ export function WhatsAppChat() {
         };
     }, [isOpen]);
 
-    /* =========================================================
-       Escape
-    ========================================================= */
-
+    /**
+     * =========================================================
+     * Close with Escape
+     * =========================================================
+     */
     useEffect(() => {
         if (!isOpen) return;
 
@@ -91,10 +116,11 @@ export function WhatsAppChat() {
         };
     }, [isOpen]);
 
-    /* =========================================================
-       Focus input
-    ========================================================= */
-
+    /**
+     * =========================================================
+     * Focus input when opened
+     * =========================================================
+     */
     useEffect(() => {
         if (!isOpen) return;
 
@@ -107,33 +133,43 @@ export function WhatsAppChat() {
         };
     }, [isOpen]);
 
-    /* =========================================================
-       Send message
-    ========================================================= */
-
+    /**
+     * =========================================================
+     * Send WhatsApp message
+     * =========================================================
+     */
     function handleSubmit(
         event: FormEvent<HTMLFormElement>,
     ) {
         event.preventDefault();
 
-        const trimmedMessage =
-            message.trim();
+        const trimmedMessage = message.trim();
 
         if (!trimmedMessage) {
             inputRef.current?.focus();
             return;
         }
 
-        const encodedMessage =
-            encodeURIComponent(
-                trimmedMessage,
+        if (!normalizedNumber) {
+            toast.warning(
+                'WhatsApp number is unavailable.',
+                {
+                    description:
+                        'Please configure a valid WhatsApp number first.',
+                },
             );
 
-        const whatsappUrl =
-            `https://wa.me/${WHATSAPP_NUMBER}?text=${encodedMessage}`;
+            return;
+        }
+
+        const encodedMessage =
+            encodeURIComponent(trimmedMessage);
+
+        const whatsappLink =
+            `https://wa.me/${normalizedNumber}?text=${encodedMessage}`;
 
         window.open(
-            whatsappUrl,
+            whatsappLink,
             '_blank',
             'noopener,noreferrer',
         );
@@ -142,10 +178,11 @@ export function WhatsAppChat() {
         setIsOpen(false);
     }
 
-    /* =========================================================
-       Quick message
-    ========================================================= */
-
+    /**
+     * =========================================================
+     * Quick message
+     * =========================================================
+     */
     function handleQuickMessage(
         value: string,
     ) {
@@ -163,8 +200,7 @@ export function WhatsAppChat() {
         >
             {/* =====================================================
                 Chat panel
-            ===================================================== */}
-
+            ====================================================== */}
             {isOpen && (
                 <div
                     className="
@@ -187,7 +223,6 @@ export function WhatsAppChat() {
                     "
                 >
                     {/* Header */}
-
                     <div className="bg-[#25D366] px-4 py-4 text-white">
                         <div className="flex items-center justify-between gap-3">
                             <div className="flex min-w-0 items-center gap-3">
@@ -232,8 +267,8 @@ export function WhatsAppChat() {
                     </div>
 
                     {/* Body */}
-
                     <div className="bg-[#fffaf5] p-4">
+                        {/* Welcome message */}
                         <div className="rounded-2xl rounded-tl-md bg-white px-3.5 py-3 shadow-sm ring-1 ring-orange-100">
                             <p className="text-xs font-medium leading-5 text-slate-700">
                                 Hi! 👋
@@ -244,14 +279,11 @@ export function WhatsAppChat() {
                         </div>
 
                         {/* Quick messages */}
-
                         <div className="mt-3 space-y-2">
                             {QUICK_MESSAGES.map(
                                 (quickMessage) => (
                                     <button
-                                        key={
-                                            quickMessage
-                                        }
+                                        key={quickMessage}
                                         type="button"
                                         onClick={() =>
                                             handleQuickMessage(
@@ -279,16 +311,13 @@ export function WhatsAppChat() {
                                             hover:text-slate-800
                                         "
                                     >
-                                        {
-                                            quickMessage
-                                        }
+                                        {quickMessage}
                                     </button>
                                 ),
                             )}
                         </div>
 
                         {/* Composer */}
-
                         <form
                             onSubmit={handleSubmit}
                             className="mt-3"
@@ -299,8 +328,7 @@ export function WhatsAppChat() {
                                     value={message}
                                     onChange={(event) =>
                                         setMessage(
-                                            event.target
-                                                .value,
+                                            event.target.value,
                                         )
                                     }
                                     placeholder="Write your message..."
@@ -323,8 +351,7 @@ export function WhatsAppChat() {
 
                                 <div className="flex items-center justify-between gap-3 border-t border-orange-50 pt-2">
                                     <span className="text-[10px] text-slate-400">
-                                        WhatsApp will
-                                        open next
+                                        WhatsApp will open next
                                     </span>
 
                                     <button
@@ -352,7 +379,6 @@ export function WhatsAppChat() {
                                         "
                                     >
                                         Send
-
                                         <Send className="h-3.5 w-3.5" />
                                     </button>
                                 </div>
@@ -364,13 +390,10 @@ export function WhatsAppChat() {
 
             {/* =====================================================
                 Floating button
-            ===================================================== */}
-
+            ====================================================== */}
             <button
                 type="button"
-                onClick={() =>
-                    setIsOpen((value) => !value)
-                }
+                onClick={handleToggle}
                 aria-label={
                     isOpen
                         ? 'Close WhatsApp chat'
@@ -379,6 +402,7 @@ export function WhatsAppChat() {
                 aria-expanded={isOpen}
                 className="
                     group
+                    relative
                     flex
                     h-14
                     w-14

@@ -9,25 +9,29 @@ import { FinalCTA } from "../components/home/CTA";
 import { FeaturedProducts } from "../components/home/FeaturedProducts";
 
 export const metadata: Metadata = {
-    title: 'Hand-Poured Soy Candles',
+    title: 'Premium Streetwear & Clothing',
+
     description:
-        'Discover handcrafted soy candles from Quiet Flame Co., made in small batches with premium fragrances for everyday moments.',
+        'Discover premium streetwear essentials, jackets, sweaters, sweatshirts, and modern clothing designed for everyday style and comfort.',
 
     alternates: {
         canonical: '/',
     },
 
     openGraph: {
-        title: 'Quiet Flame Co. | Hand-Poured Soy Candles',
+        title: 'EFE Apparel | Premium Streetwear & Clothing',
+
         description:
-            'Handcrafted soy candles made in small batches with premium fragrances and thoughtful craftsmanship.',
+            'Explore jackets, sweaters, sweatshirts, and modern streetwear essentials designed for everyday style.',
+
         url: '/',
+
         images: [
             {
-                url: '/candle2.jpg',
+                url: '/EFE Heritage Wool Jacket new.webp',
                 width: 1200,
                 height: 630,
-                alt: 'Quiet Flame Co. handcrafted soy candle',
+                alt: 'EFE Apparel Heritage Wool Jacket',
             },
         ],
     },

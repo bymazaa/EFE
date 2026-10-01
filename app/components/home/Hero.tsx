@@ -104,7 +104,7 @@ export function Hero({
                         <div className="relative aspect-[4/5] overflow-hidden rounded-[1.5rem] bg-orange-50">
                             <Image
                                 src="/0445b4_9a1dd1a2896a4bda98208c9d30cebc0b~mv2.webp"
-                                alt="Handcrafted candle"
+                              alt="EFE Apparel premium streetwear jacket"
                                 fill
                                 priority
                                 sizes="(max-width: 1024px) 100vw, 50vw"

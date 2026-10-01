@@ -30,7 +30,7 @@ export function BrandAbout({
         <div className="relative overflow-hidden rounded-[1.5rem]">
             <Image
                 src="https://static.wixstatic.com/media/0445b4_813fb4d164b042e6b82be38d525b2747~mv2.png"
-                alt={`${brandName} handcrafted candles`}
+                alt={`${brandName} handcrafted `}
                 width={713}
                 height={1121}
                 priority

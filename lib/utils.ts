@@ -53,7 +53,7 @@ export function hasDiscount(price: number, compareAtPrice?: number | null): bool
 /* Text                                                                */
 /* ------------------------------------------------------------------ */
 
-/** slugify("Vanilla Scented Candle!") -> "vanilla-scented-candle" */
+/** slugify("Vanilla Scented !") -> "vanilla-scented" */
 export function slugify(text: string): string {
     return text
         .toLowerCase()
@@ -118,3 +118,7 @@ export function getPagination(page: number, limit: number) {
 export function getTotalPages(total: number, limit: number): number {
     return Math.max(1, Math.ceil(total / limit));
 }
+
+
+
+

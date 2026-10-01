@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from 'next';
 
 import { getActiveProducts } from '@/services/product.service';
@@ -19,7 +21,7 @@ export const metadata: Metadata = {
         url: '/products',
         images: [
             {
-                url: '/candle6.jpg',
+                url: '/EFE Heritage Wool Jacket new.webp',
                 width: 1200,
                 height: 630,
                 alt: 'EFE luxury streetwear collection',

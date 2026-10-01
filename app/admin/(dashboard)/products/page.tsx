@@ -63,7 +63,7 @@ export default async function AdminProductsPage({
                             </h1>
 
                             <p className="mt-0.5 text-sm text-chocolate-soft">
-                                Manage your candle catalog
+                              Manage your clothing catalog
                             </p>
                         </div>
                     </div>
@@ -147,9 +147,9 @@ export default async function AdminProductsPage({
                         </h2>
 
                         <p className="mt-1 max-w-sm text-xs leading-5 text-chocolate-muted">
-                            {hasSearch
-                                ? `No products match "${params.search}". Try a different search term.`
-                                : 'Your product catalog is empty. Add your first candle to get started.'}
+                           {hasSearch
+    ? `No products match "${params.search}". Try a different search term.`
+    : 'Your product catalog is empty. Add your first product to get started.'}
                         </p>
 
                         {hasSearch ? (

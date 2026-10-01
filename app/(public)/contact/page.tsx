@@ -13,39 +13,41 @@ import { getSettings } from '@/services/settings.service';
 
 export const metadata: Metadata = {
     title: 'Contact Us',
+
     description:
-        'Get in touch with Quiet Flame Co. for questions about our handcrafted candles, orders, products, or anything else.',
+        'Get in touch with us for questions about our clothing, jackets, sweaters, sweatshirts, orders, sizing, or anything else.',
 
     alternates: {
         canonical: '/contact',
     },
 
     openGraph: {
-        title: 'Contact Quiet Flame Co.',
+        title: 'Contact Us',
+
         description:
-            'Have a question about our candles or your order? Get in touch with Quiet Flame Co.',
+            'Have a question about our clothing, your order, or sizing? Get in touch with us.',
+
         url: '/contact',
+
         images: [
             {
-                url: '/candle2.jpg',
+                url: '/og-image.jpg',
                 width: 1200,
                 height: 630,
-                alt: 'Quiet Flame Co. candle',
+                alt: 'Our latest streetwear collection',
             },
         ],
     },
 };
-
 
 export default async function ContactPage() {
     const settings = await getSettings();
 
     return (
         <main className="min-h-screen bg-[#fff8f2]">
-            {/* ================================================== */}
-            {/* Hero */}
-            {/* ================================================== */}
-
+            {/* ==================================================
+                Hero
+            ================================================== */}
             <section className="relative overflow-hidden border-b border-orange-100">
                 <div className="pointer-events-none absolute inset-0">
                     <div className="absolute left-1/2 top-0 h-80 w-80 -translate-x-1/2 rounded-full bg-orange-200/30 blur-3xl" />
@@ -66,23 +68,21 @@ export default async function ContactPage() {
                     </h1>
 
                     <p className="mx-auto mt-5 max-w-2xl text-[15px] leading-7 text-chocolate-soft sm:text-base">
-                        Have a question about an order, product, or
-                        anything else? Send us a message and we&apos;ll
-                        get back to you as soon as we can.
+                        Have a question about an order, product,
+                        sizing, or anything else? Send us a message
+                        and we&apos;ll get back to you as soon as we can.
                     </p>
                 </div>
             </section>
 
-            {/* ================================================== */}
-            {/* Contact Content */}
-            {/* ================================================== */}
-
+            {/* ==================================================
+                Contact Content
+            ================================================== */}
             <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
                 <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
-                    {/* ================================================== */}
-                    {/* Left Contact Info */}
-                    {/* ================================================== */}
-
+                    {/* ==================================================
+                        Left Contact Info
+                    ================================================== */}
                     <div className="space-y-5">
                         {/* Contact Card */}
                         <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-2xl shadow-gray-50">
@@ -197,12 +197,14 @@ export default async function ContactPage() {
                             </div>
 
                             <h3 className="mt-5 font-serif text-xl text-chocolate">
-                                Prefer a quick conversation?
+                                Need a quick conversation?
                             </h3>
 
                             <p className="mt-2 text-sm leading-6 text-chocolate-soft">
-                                Send us an email directly and our team
-                                will be happy to help.
+                                Have a question about sizing,
+                                products, orders, or shipping?
+                                Reach out and our team will be
+                                happy to help.
                             </p>
 
                             {settings.email ? (
@@ -217,10 +219,9 @@ export default async function ContactPage() {
                         </div>
                     </div>
 
-                    {/* ================================================== */}
-                    {/* Contact Form */}
-                    {/* ================================================== */}
-
+                    {/* ==================================================
+                        Contact Form
+                    ================================================== */}
                     <div className="rounded-3xl border border-orange-100 bg-white p-6 shadow-2xl shadow-gray-50 sm:p-8 lg:p-10">
                         <div className="mb-8">
                             <p className="text-xs font-bold uppercase tracking-[0.14em] text-orange-600">
@@ -232,8 +233,8 @@ export default async function ContactPage() {
                             </h2>
 
                             <p className="mt-2 max-w-xl text-sm leading-6 text-chocolate-soft">
-                                Fill out the form below and tell us a
-                                little about what you need.
+                                Fill out the form below and tell
+                                us a little about what you need.
                             </p>
                         </div>
 
@@ -326,18 +327,18 @@ export default async function ContactPage() {
                             </button>
 
                             <p className="text-center text-xs leading-5 text-chocolate-muted">
-                                By submitting this form, you agree to
-                                be contacted regarding your message.
+                                By submitting this form, you agree
+                                to be contacted regarding your
+                                message.
                             </p>
                         </form>
                     </div>
                 </div>
             </section>
 
-            {/* ================================================== */}
-            {/* Bottom CTA */}
-            {/* ================================================== */}
-
+            {/* ==================================================
+                Bottom CTA
+            ================================================== */}
             <section className="border-t border-orange-100 bg-white">
                 <div className="mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 lg:px-8">
                     <span className="text-xs font-bold uppercase tracking-[0.16em] text-orange-600">
@@ -345,19 +346,20 @@ export default async function ContactPage() {
                     </span>
 
                     <h2 className="mt-3 font-serif text-3xl text-chocolate">
-                        Take a look at our candles.
+                        Explore our latest collection.
                     </h2>
 
                     <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-chocolate-soft">
-                        Find a fragrance or style that makes your
-                        everyday space feel a little more special.
+                        Discover jackets, sweaters,
+                        sweatshirts, and other streetwear
+                        essentials designed for everyday style.
                     </p>
 
                     <a
                         href="/products"
                         className="mt-6 inline-flex items-center justify-center rounded-2xl bg-chocolate px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:opacity-90"
                     >
-                        Browse Products
+                        Browse Collection
                     </a>
                 </div>
             </section>

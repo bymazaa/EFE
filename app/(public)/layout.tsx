@@ -1,5 +1,5 @@
 import type { SiteSettingsDTO } from '@/services/settings.service';
-import {WhatsAppChat} from "@/app/components/home/WhatsAppChat"
+import { WhatsAppChat } from '@/app/components/home/WhatsAppChat';
 
 import { getSettings } from '@/services/settings.service';
 
@@ -10,7 +10,8 @@ import { PromoPopup } from '../components/home/PromoPopup';
 const DEFAULT_SETTINGS: SiteSettingsDTO = {
     brandName: 'Quiet Flame Co.',
     logoUrl: '',
-    description: 'Hand-poured soy candles made in small batches.',
+    description:
+        'Premium streetwear essentials, jackets, sweaters, and sweatshirts designed for modern everyday style.',
     email: '',
     phone: '',
     address: '',
@@ -43,8 +44,8 @@ export default async function PublicLayout({ children }: { children: React.React
             <main className="flex-1">{children}</main>
 
             <PromoPopup />
-            
-<WhatsAppChat/>
+
+            <WhatsAppChat whatsappNumber={settings.social.whatsapp} />
             <Footer settings={settings} />
         </div>
     );

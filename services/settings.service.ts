@@ -16,7 +16,7 @@ const SETTINGS_KEY = 'main';
 
 const DEFAULT_SETTINGS = {
     key: SETTINGS_KEY,
-    brandName: 'My Candle Shop',
+    brandName: 'EFE Apparel',
     description: '',
     logoUrl: '',
     address: '',
@@ -83,7 +83,7 @@ export async function getSettings(): Promise<SiteSettingsDTO> {
         key: SETTINGS_KEY,
         brandName: 'Quiet Flame Co.',
         logoUrl: '',
-        description: 'Hand-poured soy candles made in small batches.',
+       description: 'Premium streetwear essentials, jackets, sweaters, and sweatshirts designed for modern everyday style.',
         email: '',
         phone: '',
         address: '',

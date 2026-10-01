@@ -406,7 +406,7 @@ export default function ProductCreateForm() {
                                                 e.target.value,
                                             )
                                         }
-                                        placeholder="e.g. Vanilla Bean Candle"
+                                   placeholder="e.g. Heritage Wool Jacket"
                                         className={`w-full rounded-xl border bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:bg-white ${
                                             getFieldError(
                                                 'name',

@@ -699,12 +699,12 @@ function handleSubmit(
                                 icon={
                                     <SiWhatsapp className="h-4 w-4" />
                                 }
-                                label="WhatsApp"
+                                label="WhatsApp Number"
                                 htmlFor="whatsapp"
                                 value={
                                     form.social.whatsapp
                                 }
-                                placeholder="https://wa.me/..."
+                                placeholder="e.g. +1 (213) 792-0038"
                                 disabled={isPending}
                                 error={
                                     fieldErrors[

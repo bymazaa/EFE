@@ -1,80 +1,126 @@
 import type { Metadata, Viewport } from 'next';
 
-import { Fraunces, Inter } from 'next/font/google';
+import { Bebas_Neue, DM_Sans } from 'next/font/google';
 
 import { Toaster } from 'sonner';
 
 import './globals.css';
+
 import { PromoPopup } from './components/home/PromoPopup';
 
-const SITE_URL = 'https://www.quietflame.shop';
+/**
+ * --------------------------------------------------------------------------
+ * SITE CONFIG
+ * --------------------------------------------------------------------------
+ *
+ * Set the real production URL in:
+ *
+ * NEXT_PUBLIC_SITE_URL=https://yourdomain.com
+ *
+ * Do NOT include a trailing slash.
+ */
 
-const FACEBOOK_URL =
-    'https://www.facebook.com/p/Quite-Flame-61594366916853';
+const SITE_URL =
+    process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
-const SITE_NAME = 'Quiet Flame Co.';
+const SITE_NAME = 'Your Brand Name';
 
 const SITE_DESCRIPTION =
-    'Hand-poured soy candles made in small batches with premium wax, thoughtful fragrances, and timeless warmth for everyday moments.';
+    'Shop premium streetwear, jackets, sweaters, sweatshirts, and everyday essentials designed with a modern approach to style, comfort, and quality.';
+
+const SITE_KEYWORDS = [
+    'streetwear',
+    'streetwear clothing',
+    'premium clothing',
+    'jackets',
+    'sweaters',
+    'sweatshirts',
+    'hoodies',
+    'outerwear',
+    'fashion clothing',
+    'casual clothing',
+    'modern streetwear',
+    'online clothing store',
+];
 
 /**
- * Display serif for headings.
+ * Add only social URLs that actually belong to your brand.
  */
-const fraunces = Fraunces({
+const SOCIAL_URLS: string[] = [
+    // 'https://www.instagram.com/yourbrand',
+    // 'https://www.tiktok.com/@yourbrand',
+    // 'https://www.facebook.com/yourbrand',
+];
+
+/**
+ * --------------------------------------------------------------------------
+ * FONTS
+ * --------------------------------------------------------------------------
+ *
+ * Bebas Neue:
+ * - hero headings
+ * - collection headings
+ * - product titles
+ * - brand statements
+ *
+ * DM Sans:
+ * - body
+ * - navigation
+ * - buttons
+ * - forms
+ * - prices
+ * - general UI
+ */
+
+const bebasNeue = Bebas_Neue({
     subsets: ['latin'],
-    variable: '--font-fraunces',
-    weight: ['500', '600'],
-    style: ['normal', 'italic'],
+    variable: '--font-bebas',
+    weight: '400',
+    display: 'swap',
+});
+
+const dmSans = DM_Sans({
+    subsets: ['latin'],
+    variable: '--font-dm-sans',
+    weight: ['400', '500', '600', '700'],
     display: 'swap',
 });
 
 /**
- * Clean sans-serif for body text and admin UI.
+ * --------------------------------------------------------------------------
+ * METADATA
+ * --------------------------------------------------------------------------
  */
-const inter = Inter({
-    subsets: ['latin'],
-    variable: '--font-inter',
-    weight: ['400', '500', '600'],
-    display: 'swap',
-});
 
 export const metadata: Metadata = {
     metadataBase: new URL(SITE_URL),
 
     title: {
-        default:
-            'Quiet Flame Co. | Hand-Poured Soy Candles',
-        template: '%s | Quiet Flame Co.',
+        default: `${SITE_NAME} | Premium Streetwear & Clothing`,
+        template: `%s | ${SITE_NAME}`,
     },
 
     description: SITE_DESCRIPTION,
 
     applicationName: SITE_NAME,
 
+    keywords: SITE_KEYWORDS,
+
+    category: 'shopping',
+
     authors: [
         {
             name: SITE_NAME,
-            url: SITE_URL,
         },
     ],
 
     creator: SITE_NAME,
+
     publisher: SITE_NAME,
 
-    keywords: [
-        'Quiet Flame Co.',
-        'hand-poured candles',
-        'soy candles',
-        'handmade candles',
-        'scented candles',
-        'aromatherapy candles',
-        'premium candles',
-        'soy wax candles',
-        'candles online',
-    ],
-
-    category: 'shopping',
-
+    /**
+     * Canonical URL.
+     */
     alternates: {
         canonical: '/',
     },
@@ -96,57 +142,50 @@ export const metadata: Metadata = {
     },
 
     /**
-     * Open Graph / Facebook sharing preview.
+     * Open Graph / Facebook / WhatsApp / Messenger.
+     *
+     * Put this file in:
+     *
+     * /public/og-image.jpg
      */
     openGraph: {
         type: 'website',
+
         locale: 'en_US',
+
         url: SITE_URL,
+
         siteName: SITE_NAME,
 
-        title:
-            'Quiet Flame Co. | Hand-Poured Soy Candles',
+        title: `${SITE_NAME} | Premium Streetwear & Clothing`,
 
         description: SITE_DESCRIPTION,
 
         images: [
             {
-                url: '/candle2.jpg',
+                url: '/og-image.jpg',
                 width: 1200,
                 height: 630,
-                alt: 'Quiet Flame Co. handcrafted soy candle',
-            },
-            {
-                url: '/candle6.jpg',
-                width: 1200,
-                height: 630,
-                alt: 'Quiet Flame Co. scented candle',
-            },
-            {
-                url: '/candle8.jpg',
-                width: 1200,
-                height: 630,
-                alt: 'Quiet Flame Co. handmade candle',
+                alt: `${SITE_NAME} premium streetwear collection`,
             },
         ],
     },
 
     /**
-     * X / Twitter preview.
+     * X / Twitter.
      */
     twitter: {
         card: 'summary_large_image',
 
-        title:
-            'Quiet Flame Co. | Hand-Poured Soy Candles',
+        title: `${SITE_NAME} | Premium Streetwear & Clothing`,
 
         description: SITE_DESCRIPTION,
 
-        images: ['/candle2.jpg'],
+        images: ['/og-image.jpg'],
     },
 
     /**
-     * Browser metadata.
+     * Browser automatic detection.
      */
     formatDetection: {
         telephone: false,
@@ -154,6 +193,12 @@ export const metadata: Metadata = {
         address: false,
     },
 };
+
+/**
+ * --------------------------------------------------------------------------
+ * VIEWPORT
+ * --------------------------------------------------------------------------
+ */
 
 export const viewport: Viewport = {
     width: 'device-width',
@@ -163,18 +208,23 @@ export const viewport: Viewport = {
 };
 
 /**
- * Organization + Website structured data.
+ * --------------------------------------------------------------------------
+ * STRUCTURED DATA
+ * --------------------------------------------------------------------------
  *
- * This helps search engines understand:
- * - the brand
- * - the website
- * - the official Facebook profile
+ * OnlineStore is appropriate for an ecommerce clothing business.
+ *
+ * Product structured data should be added separately to individual
+ * product pages, because those pages contain the actual product,
+ * price and availability information.
  */
+
 const jsonLd = {
     '@context': 'https://schema.org',
+
     '@graph': [
         {
-            '@type': 'Organization',
+            '@type': 'OnlineStore',
 
             '@id': `${SITE_URL}/#organization`,
 
@@ -184,13 +234,15 @@ const jsonLd = {
 
             description: SITE_DESCRIPTION,
 
-            image: [
-                `${SITE_URL}/candle2.jpg`,
-                `${SITE_URL}/candle6.jpg`,
-                `${SITE_URL}/candle8.jpg`,
-            ],
+            logo: {
+                '@type': 'ImageObject',
 
-            sameAs: [FACEBOOK_URL],
+                url: `${SITE_URL}/logo.png`,
+            },
+
+            image: `${SITE_URL}/og-image.jpg`,
+
+            sameAs: SOCIAL_URLS,
         },
 
         {
@@ -213,6 +265,12 @@ const jsonLd = {
     ],
 };
 
+/**
+ * --------------------------------------------------------------------------
+ * ROOT LAYOUT
+ * --------------------------------------------------------------------------
+ */
+
 export default function RootLayout({
     children,
 }: Readonly<{
@@ -221,37 +279,34 @@ export default function RootLayout({
     return (
         <html
             lang="en"
-            className={`${fraunces.variable} ${inter.variable}`}
+            className={`${bebasNeue.variable} ${dmSans.variable}`}
         >
             <head>
                 <script
                     type="application/ld+json"
                     dangerouslySetInnerHTML={{
-                        __html: JSON.stringify(
-                            jsonLd,
-                        ),
+                        __html: JSON.stringify(jsonLd),
                     }}
                 />
             </head>
 
             <body className="font-sans antialiased">
                 {children}
-          <Toaster
+
+                <PromoPopup />
+
+                <Toaster
                     position="top-right"
                     duration={3000}
                     toastOptions={{
                         style: {
-                            background:
-                                'var(--color-surface)',
-                            color:
-                                'var(--color-chocolate)',
-                            border:
-                                '1px solid var(--color-border)',
+                            background: 'var(--color-surface)',
+                            color: 'var(--color-chocolate)',
+                            border: '1px solid var(--color-border)',
                             boxShadow:
                                 '0 2px 8px -2px rgb(0 0 0 / 0.08)',
                             fontSize: '13px',
-                            padding:
-                                '10px 14px',
+                            padding: '10px 14px',
                             width: '280px',
                         },
 

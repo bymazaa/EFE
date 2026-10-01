@@ -1,52 +1,67 @@
 import type { MetadataRoute } from 'next';
 
-const SITE_URL =
-    'https://www.quietflame.shop';
+import { getActiveProducts } from '@/services/product.service';
 
-export default function sitemap(): MetadataRoute.Sitemap {
-    const lastModified = new Date();
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+    const siteUrl =
+        process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
-    return [
+    const products = await getActiveProducts();
+
+    const staticPages: MetadataRoute.Sitemap = [
         {
-            url: `${SITE_URL}/`,
-            lastModified,
+            url: siteUrl,
+            lastModified: new Date(),
             changeFrequency: 'weekly',
             priority: 1,
         },
 
         {
-            url: `${SITE_URL}/products`,
-            lastModified,
+            url: `${siteUrl}/products`,
+            lastModified: new Date(),
             changeFrequency: 'daily',
             priority: 0.9,
         },
 
         {
-            url: `${SITE_URL}/about`,
-            lastModified,
-            changeFrequency: 'monthly',
-            priority: 0.7,
-        },
-
-        {
-            url: `${SITE_URL}/contact`,
-            lastModified,
+            url: `${siteUrl}/about`,
+            lastModified: new Date(),
             changeFrequency: 'monthly',
             priority: 0.6,
         },
 
         {
-            url: `${SITE_URL}/privacy-policy`,
-            lastModified,
-            changeFrequency: 'yearly',
-            priority: 0.3,
+            url: `${siteUrl}/contact`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.5,
         },
 
         {
-            url: `${SITE_URL}/terms`,
-            lastModified,
-            changeFrequency: 'yearly',
-            priority: 0.3,
+            url: `${siteUrl}/size-guide`,
+            lastModified: new Date(),
+            changeFrequency: 'monthly',
+            priority: 0.5,
         },
+    ];
+
+    const productPages: MetadataRoute.Sitemap = products.map(
+        (product) => ({
+            url: `${siteUrl}/products/${product.slug}`,
+
+            lastModified:
+                product.updatedAt ??
+                product.createdAt ??
+                new Date(),
+
+            changeFrequency: 'weekly',
+
+            priority: 0.8,
+        }),
+    );
+
+    return [
+        ...staticPages,
+        ...productPages,
     ];
 }
