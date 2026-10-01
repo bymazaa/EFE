@@ -28,7 +28,7 @@ export async function updateProductAction(
     revalidatePath('/admin/products');
 
     // Homepage product data
-    revalidatePath('/', 'page');
+    revalidatePath('/');
 
     // Public product listing
     revalidatePath('/products');

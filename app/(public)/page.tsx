@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import type { Metadata } from "next";
 import { getSettings } from "@/services/settings.service";
 import { Hero } from "@/app/components/home/Hero";

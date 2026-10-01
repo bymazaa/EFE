@@ -19,16 +19,9 @@ export async function createProductAction(
         return result;
     }
 
-    // Admin products list
-    revalidatePath('/admin/products');
-
-    // Homepage
-    revalidatePath('/', 'page');
-
-    // Public products listing
+    revalidatePath('/');
     revalidatePath('/products');
-
-    // Dynamic product pages
+    revalidatePath('/admin/products');
     revalidatePath('/products/[slug]', 'page');
 
     return result;
