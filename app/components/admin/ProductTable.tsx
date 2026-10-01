@@ -6,10 +6,10 @@ import {
 } from '@/lib/utils';
 
 import { ProductActions } from '@/app/components/admin/ProductActions';
-
-
+import { ProductInventory } from '@/app/components/admin/ProductInventory';
 
 import type { ProductDTO } from '@/services/product.service';
+
 import { LocalDate } from '../ui/LocalDate';
 import { LocalDateTime } from '../ui/Timeformat';
 
@@ -20,7 +20,7 @@ export function ProductTable({
 }) {
     return (
         <div className="overflow-x-auto">
-            <table className="w-full min-w-[980px] text-left text-sm">
+            <table className="w-full min-w-[1120px] text-left text-sm">
                 <thead>
                     <tr className="border-b border-orange-100 bg-orange-50/40">
                         <th className="w-20 py-4 pl-5 pr-3 text-xs font-semibold uppercase tracking-wide text-chocolate-muted">
@@ -37,6 +37,11 @@ export function ProductTable({
 
                         <th className="px-3 py-4 text-xs font-semibold uppercase tracking-wide text-chocolate-muted">
                             Price
+                        </th>
+
+                        {/* Inventory */}
+                        <th className="w-44 px-3 py-4 text-xs font-semibold uppercase tracking-wide text-chocolate-muted">
+                            Inventory
                         </th>
 
                         <th className="px-3 py-4 text-xs font-semibold uppercase tracking-wide text-chocolate-muted">
@@ -67,13 +72,13 @@ export function ProductTable({
                                 className="group bg-white transition-colors duration-200 hover:bg-orange-50/30"
                             >
                                 {/* Image */}
-
                                 <td className="py-4 pl-5 pr-3">
                                     <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-orange-100 bg-orange-50 shadow-sm">
                                         {product.images[0] ? (
                                             <Image
                                                 src={
-                                                    product.images[0]
+                                                    product
+                                                        .images[0]
                                                 }
                                                 alt={
                                                     product.name
@@ -91,7 +96,6 @@ export function ProductTable({
                                 </td>
 
                                 {/* Created */}
-
                                 <td className="px-3 py-4">
                                     <LocalDate
                                         date={
@@ -101,7 +105,6 @@ export function ProductTable({
                                 </td>
 
                                 {/* Product */}
-
                                 <td className="px-3 py-4">
                                     <div className="min-w-0">
                                         <p className="max-w-[260px] truncate font-semibold text-chocolate">
@@ -115,7 +118,6 @@ export function ProductTable({
                                 </td>
 
                                 {/* Price */}
-
                                 <td className="px-3 py-4">
                                     <div className="flex flex-col">
                                         <div className="flex items-center gap-2">
@@ -144,8 +146,16 @@ export function ProductTable({
                                     </div>
                                 </td>
 
-                                {/* Status */}
+                                {/* Inventory */}
+                                <td className="px-3 py-4 align-middle">
+                                    <ProductInventory
+                                        variants={
+                                            product.variants
+                                        }
+                                    />
+                                </td>
 
+                                {/* Status */}
                                 <td className="px-3 py-4">
                                     <span
                                         className={
@@ -169,7 +179,6 @@ export function ProductTable({
                                 </td>
 
                                 {/* Updated */}
-
                                 <td className="px-3 py-4">
                                     <LocalDateTime
                                         date={
@@ -179,14 +188,11 @@ export function ProductTable({
                                 </td>
 
                                 {/* Actions */}
-
                                 <td className="py-4 pl-3 pr-5">
                                     <div className="flex justify-end">
                                         <div className="rounded-xl border border-orange-100 bg-white p-1 shadow-sm transition group-hover:border-orange-200 group-hover:shadow-md">
                                             <ProductActions
-                                                id={
-                                                    product.id
-                                                }
+                                                id={product.id}
                                                 isActive={
                                                     product.isActive
                                                 }

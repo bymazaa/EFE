@@ -1,13 +1,23 @@
 import { Types } from 'mongoose';
+
 import { connectDB } from '@/lib/mongodb';
+
 import { Product, type ProductDB } from '@/models/Product';
+
 import {
     productInputSchema,
     productListQuerySchema,
     setProductActiveSchema,
 } from '@/lib/validation/product.schema';
+
 import { objectIdSchema } from '@/lib/validation/common.schema';
-import { escapeRegex, getPagination, getTotalPages } from '@/lib/utils';
+
+import {
+    escapeRegex,
+    getPagination,
+    getTotalPages,
+} from '@/lib/utils';
+
 import {
     ok,
     fail,
@@ -18,6 +28,15 @@ import {
 
 const ADMIN_PAGE_SIZE = 10;
 
+/* -------------------------------------------------------------------------- */
+/* Types                                                                      */
+/* -------------------------------------------------------------------------- */
+
+export interface ProductVariantDTO {
+    size: string;
+    stock: number;
+}
+
 export interface ProductDTO {
     id: string;
     name: string;
@@ -27,12 +46,19 @@ export interface ProductDTO {
     compareAtPrice: number | null;
     currency: string;
     images: string[];
+    variants: ProductVariantDTO[];
     isActive: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
 
-type LeanProduct = ProductDB & { _id: Types.ObjectId };
+type LeanProduct = ProductDB & {
+    _id: Types.ObjectId;
+};
+
+/* -------------------------------------------------------------------------- */
+/* Helpers                                                                    */
+/* -------------------------------------------------------------------------- */
 
 function toDTO(doc: LeanProduct): ProductDTO {
     return {
@@ -44,13 +70,22 @@ function toDTO(doc: LeanProduct): ProductDTO {
         compareAtPrice: doc.compareAtPrice ?? null,
         currency: doc.currency,
         images: doc.images ?? [],
+
+        variants: (doc.variants ?? []).map((variant) => ({
+            size: variant.size,
+            stock: variant.stock,
+        })),
+
         isActive: doc.isActive,
+
         createdAt: doc.createdAt as Date,
         updatedAt: doc.updatedAt as Date,
     };
 }
 
-/** true if the error is a MongoDB duplicate-key error (E11000) */
+/**
+ * True if the error is a MongoDB duplicate-key error (E11000).
+ */
 function isDuplicateKeyError(error: unknown): boolean {
     return (
         typeof error === 'object' &&
@@ -60,11 +95,14 @@ function isDuplicateKeyError(error: unknown): boolean {
     );
 }
 
-/* ------------------------------------------------------------------ */
-/* Public reads                                                       */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Public reads                                                               */
+/* -------------------------------------------------------------------------- */
 
-/** /products page: only active, non-deleted products. */
+/**
+ * /products page:
+ * only active, non-deleted products.
+ */
 export async function getActiveProducts(): Promise<ProductDTO[]> {
     await connectDB();
 
@@ -78,7 +116,10 @@ export async function getActiveProducts(): Promise<ProductDTO[]> {
     return products.map(toDTO);
 }
 
-/** /products/[slug] page. Returns null if not found, inactive, or deleted. */
+/**
+ * /products/[slug] page.
+ * Returns null if not found, inactive, or deleted.
+ */
 export async function getProductBySlug(
     slug: string,
 ): Promise<ProductDTO | null> {
@@ -93,9 +134,9 @@ export async function getProductBySlug(
     return product ? toDTO(product) : null;
 }
 
-/* ------------------------------------------------------------------ */
-/* Admin reads                                                        */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Admin reads                                                                */
+/* -------------------------------------------------------------------------- */
 
 export interface PaginatedProducts {
     products: ProductDTO[];
@@ -104,7 +145,11 @@ export interface PaginatedProducts {
     totalPages: number;
 }
 
-/** /admin/products table: all non-deleted products (active + inactive), searchable, paginated. */
+/**
+ * /admin/products table:
+ * all non-deleted products (active + inactive),
+ * searchable, paginated.
+ */
 export async function getAdminProducts(
     query: unknown,
 ): Promise<ActionResult<PaginatedProducts>> {
@@ -149,14 +194,20 @@ export async function getAdminProducts(
             products: products.map(toDTO),
             total,
             page,
-            totalPages: getTotalPages(total, ADMIN_PAGE_SIZE),
+            totalPages: getTotalPages(
+                total,
+                ADMIN_PAGE_SIZE,
+            ),
         });
     } catch (error) {
         return handleError(error);
     }
 }
 
-/** /admin/products/[id]/edit: prefill the form. */
+/**
+ * /admin/products/[id]/edit:
+ * prefill the form.
+ */
 export async function getProductById(
     id: string,
 ): Promise<ProductDTO | null> {
@@ -176,11 +227,39 @@ export async function getProductById(
     return product ? toDTO(product) : null;
 }
 
-/* ------------------------------------------------------------------ */
-/* Admin writes                                                       */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Admin writes                                                               */
+/* -------------------------------------------------------------------------- */
 
-/** /admin/products/new */
+/**
+ * /admin/products/new
+ */
+import { randomBytes } from 'node:crypto';
+
+function generateSlugSuffix(): string {
+    return randomBytes(4).toString('hex');
+}
+
+function isDuplicateSlugError(error: unknown): boolean {
+    if (
+        typeof error !== 'object' ||
+        error === null ||
+        !('code' in error)
+    ) {
+        return false;
+    }
+
+    const mongoError = error as {
+        code: number;
+        keyPattern?: Record<string, unknown>;
+    };
+
+    return (
+        mongoError.code === 11000 &&
+        !!mongoError.keyPattern?.slug
+    );
+}
+
 export async function createProduct(
     data: unknown,
 ): Promise<ActionResult<ProductDTO>> {
@@ -193,30 +272,74 @@ export async function createProduct(
     try {
         await connectDB();
 
-        const product = await Product.create({
-            ...parsed.data,
-            deletedAt: null,
-        });
+        const baseSlug = parsed.data.slug;
 
-        return ok(
-            'Product created successfully.',
-            toDTO(product.toObject() as LeanProduct),
-        );
-    } catch (error) {
-        if (isDuplicateKeyError(error)) {
-            return fail(
-                'A product with this slug already exists.',
-                {
-                    slug: ['This slug is already in use'],
-                },
+        // First attempt: use the original slug.
+        try {
+            const product = await Product.create({
+                ...parsed.data,
+                deletedAt: null,
+            });
+
+            return ok(
+                'Product created successfully.',
+                toDTO(
+                    product.toObject() as LeanProduct,
+                ),
             );
+        } catch (error) {
+            // Only generate a new slug when the slug itself conflicts.
+            if (!isDuplicateSlugError(error)) {
+                throw error;
+            }
         }
 
+        // Slug already exists -> generate a unique suffix.
+        for (let attempt = 0; attempt < 5; attempt++) {
+            const suffix = generateSlugSuffix();
+
+            // Keep the final slug within the existing 140-character limit.
+            const maxBaseLength = 140 - suffix.length - 1;
+
+            const uniqueSlug = `${baseSlug
+                .slice(0, maxBaseLength)
+                .replace(/-+$/, '')}-${suffix}`;
+
+            try {
+                const product = await Product.create({
+                    ...parsed.data,
+                    slug: uniqueSlug,
+                    deletedAt: null,
+                });
+
+                return ok(
+                    'Product created successfully.',
+                    toDTO(
+                        product.toObject() as LeanProduct,
+                    ),
+                );
+            } catch (error) {
+                // Another request could theoretically generate
+                // the same slug. Retry with another suffix.
+                if (isDuplicateSlugError(error)) {
+                    continue;
+                }
+
+                throw error;
+            }
+        }
+
+        return fail(
+            'Could not generate a unique product slug. Please try again.',
+        );
+    } catch (error) {
         return handleError(error);
     }
 }
+/**
+ * /admin/products/[id]/edit
+ */
 
-/** /admin/products/[id]/edit */
 export async function updateProduct(
     id: string,
     data: unknown,
@@ -236,43 +359,87 @@ export async function updateProduct(
     try {
         await connectDB();
 
-        const product = await Product.findOneAndUpdate(
-            {
-                _id: parsedId.data,
-                deletedAt: null,
-            },
-            {
-                $set: parsed.data,
-            },
-            {
-                returnDocument: 'after',
-                runValidators: true,
-            },
-        ).lean<LeanProduct | null>();
+        const baseSlug = parsed.data.slug;
 
-        if (!product) {
-            return fail('Product not found.');
+        for (let attempt = 0; attempt < 5; attempt++) {
+            let slug = baseSlug;
+
+            /*
+             * First attempt uses the requested slug.
+             * If that slug already belongs to another active product,
+             * generate a random suffix and retry.
+             */
+            if (attempt > 0) {
+                const suffix =
+                    generateSlugSuffix();
+
+                const maxBaseLength =
+                    140 - suffix.length - 1;
+
+                const trimmedBase =
+                    baseSlug
+                        .slice(
+                            0,
+                            maxBaseLength,
+                        )
+                        .replace(/-+$/, '');
+
+                slug = `${trimmedBase}-${suffix}`;
+            }
+
+            try {
+                const product =
+                    await Product.findOneAndUpdate(
+                        {
+                            _id: parsedId.data,
+                            deletedAt: null,
+                        },
+                        {
+                            $set: {
+                                ...parsed.data,
+                                slug,
+                            },
+                        },
+                        {
+                            returnDocument: 'after',
+                            runValidators: true,
+                        },
+                    ).lean<LeanProduct | null>();
+
+                if (!product) {
+                    return fail(
+                        'Product not found.',
+                    );
+                }
+
+                return ok(
+                    'Product updated successfully.',
+                    toDTO(product),
+                );
+            } catch (error) {
+                if (
+                    isDuplicateSlugError(
+                        error,
+                    )
+                ) {
+                    continue;
+                }
+
+                throw error;
+            }
         }
 
-        return ok(
-            'Product updated successfully.',
-            toDTO(product),
+        return fail(
+            'Could not generate a unique product slug. Please try again.',
         );
     } catch (error) {
-        if (isDuplicateKeyError(error)) {
-            return fail(
-                'A product with this slug already exists.',
-                {
-                    slug: ['This slug is already in use'],
-                },
-            );
-        }
-
         return handleError(error);
     }
 }
 
-/** Activate / deactivate toggle in the admin product table. */
+/**
+ * Activate / deactivate toggle in the admin product table.
+ */
 export async function setProductActive(
     id: string,
     isActive: boolean,
@@ -316,8 +483,9 @@ export async function setProductActive(
 }
 
 /**
- * Soft delete: marks the product as deleted and inactive instead of removing
- * it, so historical orders (which store a snapshot) are never affected.
+ * Soft delete:
+ * marks the product as deleted and inactive instead of removing it,
+ * so historical orders (which store a snapshot) are never affected.
  */
 export async function softDeleteProduct(
     id: string,
@@ -354,9 +522,9 @@ export async function softDeleteProduct(
     }
 }
 
-/* ------------------------------------------------------------------ */
-/* Internal helper - used by order.service.ts only                    */
-/* ------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Internal helper - used by order.service.ts only                           */
+/* -------------------------------------------------------------------------- */
 
 /**
  * Fetch multiple products by id for cart validation / order creation.

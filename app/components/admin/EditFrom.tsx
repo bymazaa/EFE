@@ -23,6 +23,11 @@ type Props = {
     product: ProductDTO;
 };
 
+type VariantState = {
+    size: string;
+    stock: string;
+};
+
 type FormState = {
     name: string;
     description: string;
@@ -30,6 +35,7 @@ type FormState = {
     compareAtPrice: string;
     currency: string;
     images: string[];
+    variants: VariantState[];
     isActive: boolean;
 };
 
@@ -62,19 +68,56 @@ export default function EditProductForm({
                 product.images.length > 0
                     ? product.images
                     : [''],
+            variants: product.variants.map((variant) => ({
+                size: variant.size,
+                stock: variant.stock.toString(),
+            })),
             isActive: product.isActive,
         });
 
     const [errors, setErrors] =
         useState<Record<string, string[]>>({});
 
-    const generatedSlug = useMemo(
-        () => createSlug(form.name),
-        [form.name],
-    );
+    /* ---------------------------------------------------------------------- */
+    /* Slug                                                                   */
+    /* ---------------------------------------------------------------------- */
+
+    const resolvedSlug = useMemo(() => {
+        const currentName = form.name.trim();
+        const originalName = product.name.trim();
+
+        /*
+         * Name has not changed:
+         * keep the exact slug coming from the database.
+         *
+         * This is important when the existing slug already has
+         * an automatically generated suffix.
+         */
+        if (currentName === originalName) {
+            return product.slug;
+        }
+
+        /*
+         * Name changed:
+         * generate a new slug from the new name.
+         */
+        return createSlug(currentName);
+    }, [
+        form.name,
+        product.name,
+        product.slug,
+    ]);
+
+    const slugWasChanged =
+        form.name.trim() !== product.name.trim();
+
+    /* ---------------------------------------------------------------------- */
+    /* Pricing calculations                                                    */
+    /* ---------------------------------------------------------------------- */
 
     const discount = useMemo(() => {
         const price = Number(form.price);
+
         const originalPrice = Number(
             form.compareAtPrice,
         );
@@ -99,6 +142,7 @@ export default function EditProductForm({
 
     const savings = useMemo(() => {
         const price = Number(form.price);
+
         const originalPrice = Number(
             form.compareAtPrice,
         );
@@ -117,6 +161,10 @@ export default function EditProductForm({
         form.compareAtPrice,
     ]);
 
+    /* ---------------------------------------------------------------------- */
+    /* Generic field update                                                    */
+    /* ---------------------------------------------------------------------- */
+
     const updateField = <
         K extends keyof FormState
     >(
@@ -130,10 +178,16 @@ export default function EditProductForm({
 
         setErrors((prev) => {
             const next = { ...prev };
+
             delete next[field];
+
             return next;
         });
     };
+
+    /* ---------------------------------------------------------------------- */
+    /* Images                                                                  */
+    /* ---------------------------------------------------------------------- */
 
     const updateImage = (
         index: number,
@@ -152,13 +206,18 @@ export default function EditProductForm({
 
         setErrors((prev) => {
             const next = { ...prev };
+
             delete next.images;
+
             return next;
         });
     };
 
     const addImage = () => {
-        if (form.images.length >= 8) {
+        if (
+            form.images.length >= 8 ||
+            isPending
+        ) {
             return;
         }
 
@@ -171,7 +230,10 @@ export default function EditProductForm({
     const removeImage = (
         index: number,
     ) => {
-        if (form.images.length === 1) {
+        if (
+            form.images.length === 1 ||
+            isPending
+        ) {
             return;
         }
 
@@ -182,13 +244,139 @@ export default function EditProductForm({
                     imageIndex !== index,
             ),
         }));
+
+        setErrors((prev) => {
+            const next = { ...prev };
+
+            delete next.images;
+
+            return next;
+        });
     };
+
+    /* ---------------------------------------------------------------------- */
+    /* Inventory                                                               */
+    /* ---------------------------------------------------------------------- */
+
+    const totalStock = useMemo(
+        () =>
+            form.variants.reduce(
+                (total, variant) => {
+                    const stock = Number(
+                        variant.stock,
+                    );
+
+                    return (
+                        total +
+                        (Number.isFinite(stock) &&
+                        stock >= 0
+                            ? stock
+                            : 0)
+                    );
+                },
+                0,
+            ),
+        [form.variants],
+    );
+
+    const addVariant = () => {
+        if (
+            form.variants.length >= 20 ||
+            isPending
+        ) {
+            return;
+        }
+
+        setForm((prev) => ({
+            ...prev,
+            variants: [
+                ...prev.variants,
+                {
+                    size: '',
+                    stock: '',
+                },
+            ],
+        }));
+
+        setErrors((prev) => {
+            const next = { ...prev };
+
+            delete next.variants;
+
+            return next;
+        });
+    };
+
+    const updateVariant = (
+        index: number,
+        field: keyof VariantState,
+        value: string,
+    ) => {
+        setForm((prev) => ({
+            ...prev,
+
+            variants: prev.variants.map(
+                (variant, variantIndex) =>
+                    variantIndex === index
+                        ? {
+                              ...variant,
+                              [field]: value,
+                          }
+                        : variant,
+            ),
+        }));
+
+        setErrors((prev) => {
+            const next = { ...prev };
+
+            delete next.variants;
+
+            delete next[
+                `variants.${index}.${field}`
+            ];
+
+            return next;
+        });
+    };
+
+    const removeVariant = (
+        index: number,
+    ) => {
+        if (isPending) {
+            return;
+        }
+
+        setForm((prev) => ({
+            ...prev,
+
+            variants: prev.variants.filter(
+                (_, variantIndex) =>
+                    variantIndex !== index,
+            ),
+        }));
+
+        setErrors((prev) => {
+            const next = { ...prev };
+
+            delete next.variants;
+
+            return next;
+        });
+    };
+
+    /* ---------------------------------------------------------------------- */
+    /* Validation helpers                                                      */
+    /* ---------------------------------------------------------------------- */
 
     const getFieldError = (
         field: string,
     ) => {
         return errors[field]?.[0];
     };
+
+    /* ---------------------------------------------------------------------- */
+    /* Submit                                                                  */
+    /* ---------------------------------------------------------------------- */
 
     const handleSubmit = (
         event: React.FormEvent<HTMLFormElement>,
@@ -199,23 +387,47 @@ export default function EditProductForm({
 
         const payload: ProductInput = {
             name: form.name.trim(),
-            slug: generatedSlug,
+
+            /*
+             * If name is unchanged:
+             *   product.slug from DB
+             *
+             * If name changed:
+             *   newly generated slug
+             */
+            slug: resolvedSlug,
+
             description:
                 form.description.trim(),
+
             price: Number(form.price),
+
             compareAtPrice:
                 form.compareAtPrice.trim() === ''
                     ? null
                     : Number(
                           form.compareAtPrice,
                       ),
+
             currency:
                 form.currency
                     .trim()
                     .toUpperCase(),
+
             images: form.images
                 .map((image) => image.trim())
                 .filter(Boolean),
+
+            variants:
+                form.variants.map(
+                    (variant) => ({
+                        size: variant.size.trim(),
+                        stock: Number(
+                            variant.stock,
+                        ),
+                    }),
+                ),
+
             isActive: form.isActive,
         };
 
@@ -274,9 +486,9 @@ export default function EditProductForm({
                 onSubmit={handleSubmit}
                 className="mx-auto w-full max-w-7xl space-y-5 sm:space-y-6"
             >
-                {/* =====================================================
+                {/* ==========================================================
                     Header
-                ===================================================== */}
+                =========================================================== */}
 
                 <div className="flex flex-col gap-4 rounded-2xl border border-orange-100 bg-white p-4 shadow-sm sm:p-5 lg:flex-row lg:items-center lg:justify-between">
                     <div className="min-w-0">
@@ -317,14 +529,14 @@ export default function EditProductForm({
                     </div>
                 </div>
 
-                {/* =====================================================
+                {/* ==========================================================
                     Main Layout
-                ===================================================== */}
+                =========================================================== */}
 
                 <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-6">
-                    {/* =================================================
+                    {/* ======================================================
                         Left Content
-                    ================================================= */}
+                    ======================================================= */}
 
                     <div className="min-w-0 space-y-5">
                         {/* Basic Information */}
@@ -391,8 +603,16 @@ export default function EditProductForm({
                                             URL Slug
                                         </label>
 
-                                        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-600">
-                                            Auto generated
+                                        <span
+                                            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                                                slugWasChanged
+                                                    ? 'bg-blue-50 text-blue-600'
+                                                    : 'bg-slate-100 text-slate-500'
+                                            }`}
+                                        >
+                                            {slugWasChanged
+                                                ? 'New slug from name'
+                                                : 'Current slug'}
                                         </span>
                                     </div>
 
@@ -402,10 +622,17 @@ export default function EditProductForm({
                                         </div>
 
                                         <div className="min-w-0 flex-1 overflow-x-auto px-3 py-3 text-sm font-medium text-slate-700 sm:px-4">
-                                            {generatedSlug ||
+                                            {resolvedSlug ||
                                                 'product-slug'}
                                         </div>
                                     </div>
+
+                                    {slugWasChanged && (
+                                        <p className="mt-1.5 text-xs text-blue-600">
+                                            The slug will update because
+                                            the product name changed.
+                                        </p>
+                                    )}
 
                                     {getFieldError(
                                         'slug',
@@ -529,7 +756,9 @@ export default function EditProductForm({
                                                     e.target.value,
                                                 )
                                             }
-                                            disabled={isPending}
+                                            disabled={
+                                                isPending
+                                            }
                                             className={`w-full rounded-xl border bg-white py-3.5 pl-8 pr-3 text-lg font-bold text-slate-900 outline-none ${
                                                 getFieldError(
                                                     'price',
@@ -589,7 +818,9 @@ export default function EditProductForm({
                                                     e.target.value,
                                                 )
                                             }
-                                            disabled={isPending}
+                                            disabled={
+                                                isPending
+                                            }
                                             className={`w-full rounded-xl border bg-white py-3.5 pl-8 pr-3 text-lg font-bold text-slate-900 outline-none ${
                                                 getFieldError(
                                                     'compareAtPrice',
@@ -668,6 +899,190 @@ export default function EditProductForm({
                                 )}
                         </section>
 
+                        {/* Inventory */}
+
+                        <section className="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm sm:p-6">
+                            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="min-w-0">
+                                    <h2 className="text-base font-semibold text-chocolate sm:text-lg">
+                                        Inventory
+                                    </h2>
+
+                                    <p className="mt-1 text-xs leading-5 text-chocolate-muted sm:text-sm">
+                                        Update the available stock for
+                                        each size.
+                                    </p>
+                                </div>
+
+                                <div className="w-fit rounded-lg bg-slate-50 px-3 py-2">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                        Total Stock
+                                    </p>
+
+                                    <p className="mt-0.5 text-sm font-bold text-slate-800">
+                                        {totalStock}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {form.variants.length > 0 && (
+                                <div className="space-y-3">
+                                    {form.variants.map(
+                                        (
+                                            variant,
+                                            index,
+                                        ) => (
+                                            <div
+                                                key={
+                                                    index
+                                                }
+                                                className="rounded-xl border border-slate-200 bg-slate-50 p-3"
+                                            >
+                                                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_160px_auto] sm:items-end">
+                                                    <div>
+                                                        <label
+                                                            htmlFor={`variant-size-${index}`}
+                                                            className="mb-2 block text-xs font-semibold text-slate-700"
+                                                        >
+                                                            Size
+                                                        </label>
+
+                                                        <input
+                                                            id={`variant-size-${index}`}
+                                                            type="text"
+                                                            value={
+                                                                variant.size
+                                                            }
+                                                            onChange={(
+                                                                e,
+                                                            ) =>
+                                                                updateVariant(
+                                                                    index,
+                                                                    'size',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                isPending
+                                                            }
+                                                            placeholder="e.g. M, Medium, 32"
+                                                            className={`w-full rounded-lg border bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-400 ${
+                                                                getFieldError(
+                                                                    `variants.${index}.size`,
+                                                                )
+                                                                    ? 'border-red-400'
+                                                                    : 'border-slate-200'
+                                                            } disabled:cursor-not-allowed disabled:bg-slate-50`}
+                                                        />
+
+                                                        {getFieldError(
+                                                            `variants.${index}.size`,
+                                                        ) && (
+                                                            <p className="mt-1.5 text-xs font-medium text-red-500">
+                                                                {getFieldError(
+                                                                    `variants.${index}.size`,
+                                                                )}
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    <div>
+                                                        <label
+                                                            htmlFor={`variant-stock-${index}`}
+                                                            className="mb-2 block text-xs font-semibold text-slate-700"
+                                                        >
+                                                            Stock
+                                                        </label>
+
+                                                        <input
+                                                            id={`variant-stock-${index}`}
+                                                            type="number"
+                                                            min="0"
+                                                            step="1"
+                                                            inputMode="numeric"
+                                                            value={
+                                                                variant.stock
+                                                            }
+                                                            onChange={(
+                                                                e,
+                                                            ) =>
+                                                                updateVariant(
+                                                                    index,
+                                                                    'stock',
+                                                                    e.target
+                                                                        .value,
+                                                                )
+                                                            }
+                                                            disabled={
+                                                                isPending
+                                                            }
+                                                            placeholder="0"
+                                                            className={`w-full rounded-lg border bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-400 ${
+                                                                getFieldError(
+                                                                    `variants.${index}.stock`,
+                                                                )
+                                                                    ? 'border-red-400'
+                                                                    : 'border-slate-200'
+                                                            } disabled:cursor-not-allowed disabled:bg-slate-50`}
+                                                        />
+
+                                                        {getFieldError(
+                                                            `variants.${index}.stock`,
+                                                        ) && (
+                                                            <p className="mt-1.5 text-xs font-medium text-red-500">
+                                                                {getFieldError(
+                                                                    `variants.${index}.stock`,
+                                                                )}
+                                                            </p>
+                                                        )}
+                                                    </div>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            removeVariant(
+                                                                index,
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            isPending
+                                                        }
+                                                        className="w-full cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ),
+                                    )}
+                                </div>
+                            )}
+
+                            {getFieldError(
+                                'variants',
+                            ) && (
+                                <p className="mt-2 text-xs font-medium text-red-500">
+                                    {getFieldError(
+                                        'variants',
+                                    )}
+                                </p>
+                            )}
+
+                            <button
+                                type="button"
+                                onClick={addVariant}
+                                disabled={
+                                    form.variants.length >=
+                                        20 ||
+                                    isPending
+                                }
+                                className="mt-4 w-full cursor-pointer rounded-xl border border-dashed border-orange-200 bg-orange-50/50 px-4 py-2.5 text-sm font-semibold text-orange-600 transition hover:border-orange-300 hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+                            >
+                                + Add size
+                            </button>
+                        </section>
+
                         {/* Images */}
 
                         <section className="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm sm:p-6">
@@ -694,7 +1109,9 @@ export default function EditProductForm({
                                         index,
                                     ) => (
                                         <div
-                                            key={index}
+                                            key={
+                                                index
+                                            }
                                             className="rounded-xl border border-slate-200 bg-slate-50 p-3"
                                         >
                                             <div className="flex items-center gap-3">
@@ -782,9 +1199,9 @@ export default function EditProductForm({
                         </section>
                     </div>
 
-                    {/* =================================================
+                    {/* ======================================================
                         Right Sidebar
-                    ================================================= */}
+                    ======================================================= */}
 
                     <aside className="min-w-0 space-y-5 lg:sticky lg:top-6 lg:self-start">
                         {/* Preview */}
@@ -869,59 +1286,63 @@ export default function EditProductForm({
 
                         {/* Publish Settings */}
 
-                      <section className="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm sm:p-5">
-    <h2 className="text-base font-semibold text-chocolate">
-        Publish Settings
-    </h2>
+                        <section className="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm sm:p-5">
+                            <h2 className="text-base font-semibold text-chocolate">
+                                Publish Settings
+                            </h2>
 
-    <p className="mt-1 text-xs leading-5 text-chocolate-muted">
-        Control product visibility.
-    </p>
+                            <p className="mt-1 text-xs leading-5 text-chocolate-muted">
+                                Control product visibility.
+                            </p>
 
-    <div className="mt-4 flex items-center justify-between gap-4 rounded-xl bg-slate-50 p-4">
-        <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-800">
-                Product visibility
-            </p>
+                            <div className="mt-4 flex items-center justify-between gap-4 rounded-xl bg-slate-50 p-4">
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-slate-800">
+                                        Product visibility
+                                    </p>
 
-            <p className="mt-1 text-xs text-slate-500">
-                {form.isActive
-                    ? 'Visible to customers'
-                    : 'Hidden from customers'}
-            </p>
-        </div>
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        {form.isActive
+                                            ? 'Visible to customers'
+                                            : 'Hidden from customers'}
+                                    </p>
+                                </div>
 
-        <button
-            type="button"
-            disabled={isPending}
-            onClick={() =>
-                updateField(
-                    'isActive',
-                    !form.isActive,
-                )
-            }
-            aria-label={
-                form.isActive
-                    ? 'Disable product'
-                    : 'Enable product'
-            }
-            aria-pressed={form.isActive}
-            className={`relative h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 ${
-                form.isActive
-                    ? 'bg-orange-500'
-                    : 'bg-slate-300'
-            } disabled:cursor-not-allowed disabled:opacity-60`}
-        >
-            <span
-                className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                    form.isActive
-                        ? 'translate-x-6'
-                        : 'translate-x-0'
-                }`}
-            />
-        </button>
-    </div>
-</section>
+                                <button
+                                    type="button"
+                                    disabled={
+                                        isPending
+                                    }
+                                    onClick={() =>
+                                        updateField(
+                                            'isActive',
+                                            !form.isActive,
+                                        )
+                                    }
+                                    aria-label={
+                                        form.isActive
+                                            ? 'Disable product'
+                                            : 'Enable product'
+                                    }
+                                    aria-pressed={
+                                        form.isActive
+                                    }
+                                    className={`relative h-8 w-14 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 ${
+                                        form.isActive
+                                            ? 'bg-orange-500'
+                                            : 'bg-slate-300'
+                                    } disabled:cursor-not-allowed disabled:opacity-60`}
+                                >
+                                    <span
+                                        className={`absolute left-1 top-1 h-6 w-6 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+                                            form.isActive
+                                                ? 'translate-x-6'
+                                                : 'translate-x-0'
+                                        }`}
+                                    />
+                                </button>
+                            </div>
+                        </section>
 
                         {/* Product URL */}
 
@@ -934,7 +1355,7 @@ export default function EditProductForm({
                                 <p className="break-all text-sm leading-6 text-slate-600">
                                     /products/
                                     <span className="font-semibold text-slate-900">
-                                        {generatedSlug ||
+                                        {resolvedSlug ||
                                             'product-slug'}
                                     </span>
                                 </p>
@@ -943,9 +1364,9 @@ export default function EditProductForm({
                     </aside>
                 </div>
 
-                {/* =====================================================
+                {/* ==========================================================
                     Actions
-                ===================================================== */}
+                =========================================================== */}
 
                 <div className="rounded-2xl border border-orange-100 bg-white p-3 shadow-sm sm:p-4">
                     <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">

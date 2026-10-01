@@ -17,6 +17,10 @@ import {
 
 import { cartItemsSchema } from './cart.schema';
 
+/* ------------------------------------------------------------------ */
+/* Customer                                                            */
+/* ------------------------------------------------------------------ */
+
 export const customerInfoSchema = z.object({
     name: z
         .string()
@@ -28,6 +32,10 @@ export const customerInfoSchema = z.object({
 
     phone: phoneSchema,
 });
+
+/* ------------------------------------------------------------------ */
+/* Shipping address                                                   */
+/* ------------------------------------------------------------------ */
 
 export const shippingAddressSchema = z.object({
     address: z
@@ -53,7 +61,10 @@ export const shippingAddressSchema = z.object({
     country: z.literal('United States'),
 });
 
-/* *Checkout form (client + server)* */
+/* ------------------------------------------------------------------ */
+/* Checkout form (client + server)                                    */
+/* ------------------------------------------------------------------ */
+
 export const checkoutSchema = z.object({
     customer: customerInfoSchema,
 
@@ -62,21 +73,30 @@ export const checkoutSchema = z.object({
     paymentMethod: z.enum(PAYMENT_METHODS),
 });
 
-/*
- * placeOrder Server Action (server only).
- * Contains NO prices or totals.
- * The server reads prices from the database.
- */
+/* ------------------------------------------------------------------ */
+/* Place order                                                        */
+/*                                                                     */
+/* Contains cart items only. Prices/totals are NOT trusted from the   */
+/* client. The server reads current product prices from the database. */
+/* ------------------------------------------------------------------ */
+
 export const placeOrderSchema = checkoutSchema.extend({
     items: cartItemsSchema,
 });
 
-/* *Admin: change order status* */
+/* ------------------------------------------------------------------ */
+/* Admin: change order status                                         */
+/* ------------------------------------------------------------------ */
+
 export const updateOrderStatusSchema = z.object({
     orderId: objectIdSchema,
 
     orderStatus: z.enum(ORDER_STATUSES),
 });
+
+/* ------------------------------------------------------------------ */
+/* Admin order sorting                                                */
+/* ------------------------------------------------------------------ */
 
 export const ORDER_SORT_OPTIONS = [
     'newest',
@@ -85,16 +105,24 @@ export const ORDER_SORT_OPTIONS = [
     'amount_asc',
 ] as const;
 
-export type OrderSort =
-    (typeof ORDER_SORT_OPTIONS)[number];
+export type OrderSort = (typeof ORDER_SORT_OPTIONS)[number];
 
-/* *admin/orders?page=&search=&orderStatus=&paymentStatus=&sort=* */
+/* ------------------------------------------------------------------ */
+/* Admin order list query                                             */
+/*                                                                     */
+/* Example:                                                           */
+/* /admin/orders?page=1&search=&orderStatus=&paymentStatus=&sort=    */
+/* ------------------------------------------------------------------ */
+
 export const orderListQuerySchema = z.object({
     page: pageSchema,
 
     search: searchSchema,
 
-    // *Invalid or "all" values become undefined/default instead of throwing*
+    /*
+     * Invalid or "all" values become undefined
+     * instead of throwing a validation error.
+     */
     orderStatus: z
         .enum(ORDER_STATUSES)
         .optional()
@@ -105,12 +133,20 @@ export const orderListQuerySchema = z.object({
         .optional()
         .catch(undefined),
 
+    /*
+     * Defaults to newest when missing or invalid.
+     */
     sort: z
         .enum(ORDER_SORT_OPTIONS)
         .catch('newest'),
 });
 
-/* *order-confirmation/[orderNumber] (e.g. CND-10024)* */
+/* ------------------------------------------------------------------ */
+/* Order confirmation                                                 */
+/*                                                                     */
+/* Example: CND-10024                                                 */
+/* ------------------------------------------------------------------ */
+
 export const orderNumberSchema = z
     .string()
     .trim()
@@ -120,20 +156,30 @@ export const orderNumberSchema = z
         'Invalid order number',
     );
 
-export type CustomerInfoInput =
-    z.infer<typeof customerInfoSchema>;
+/* ------------------------------------------------------------------ */
+/* Types                                                              */
+/* ------------------------------------------------------------------ */
 
-export type ShippingAddressInput =
-    z.infer<typeof shippingAddressSchema>;
+export type CustomerInfoInput = z.infer<
+    typeof customerInfoSchema
+>;
 
-export type CheckoutInput =
-    z.infer<typeof checkoutSchema>;
+export type ShippingAddressInput = z.infer<
+    typeof shippingAddressSchema
+>;
 
-export type PlaceOrderInput =
-    z.infer<typeof placeOrderSchema>;
+export type CheckoutInput = z.infer<
+    typeof checkoutSchema
+>;
 
-export type UpdateOrderStatusInput =
-    z.infer<typeof updateOrderStatusSchema>;
+export type PlaceOrderInput = z.infer<
+    typeof placeOrderSchema
+>;
 
-export type OrderListQuery =
-    z.infer<typeof orderListQuerySchema>;
+export type UpdateOrderStatusInput = z.infer<
+    typeof updateOrderStatusSchema
+>;
+
+export type OrderListQuery = z.infer<
+    typeof orderListQuerySchema
+>;

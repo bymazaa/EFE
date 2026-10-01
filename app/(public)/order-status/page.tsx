@@ -29,8 +29,7 @@ import {
 
 export const metadata: Metadata = {
     title: 'Track Order',
-    description:
-        'Check your order status and details.',
+    description: 'Check your order status and details.',
     robots: {
         index: false,
         follow: false,
@@ -39,10 +38,7 @@ export const metadata: Metadata = {
 
 interface PageProps {
     searchParams: Promise<
-        Record<
-            string,
-            string | string[] | undefined
-        >
+        Record<string, string | string[] | undefined>
     >;
 }
 
@@ -98,7 +94,7 @@ function formatStatus(
     value: string,
 ): string {
     return value
-        .replace(/[_-]+/g, ' ')
+        .replace(/[\_-]+/g, ' ')
         .replace(/\b\w/g, (char) =>
             char.toUpperCase(),
         );
@@ -370,7 +366,7 @@ function SearchForm({
                             htmlFor="orderId"
                             className="block text-xs font-semibold text-[#3b2419]"
                         >
-                            Order ID
+                            Order Number
                         </label>
 
                         <input
@@ -378,7 +374,7 @@ function SearchForm({
                             name="orderId"
                             type="text"
                             defaultValue={orderId}
-                            placeholder="Enter your order Number"
+                            placeholder="e.g. CND-10024"
                             autoComplete="off"
                             className="mt-2 block w-full rounded-xl border border-orange-100 bg-[#fffaf6] px-3.5 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-500/10"
                         />
@@ -462,15 +458,12 @@ function OrderResult({
                         <div className="flex w-fit items-center gap-2 rounded-full border border-orange-100 bg-white px-3.5 py-2 text-xs font-medium text-[#765b47] shadow-sm">
                             <CalendarDays className="h-3.5 w-3.5 text-orange-500" />
 
-                            {formatDate(
-                                order.createdAt,
-                            )}
+                            {formatDate(order.createdAt)}
                         </div>
                     </div>
                 </div>
 
                 {/* Status */}
-
                 <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5">
                     <StatusCard
                         title="Order status"
@@ -495,9 +488,7 @@ function OrderResult({
 
                 <section className="rounded-3xl border border-orange-100 bg-white p-5 shadow-2xl shadow-gray-50 sm:p-6">
                     <SectionHeading
-                        icon={
-                            <User className="h-4 w-4" />
-                        }
+                        icon={<User className="h-4 w-4" />}
                         title="Customer Information"
                         description="Details associated with this order."
                     />
@@ -564,6 +555,7 @@ function OrderResult({
                                         .shippingAddress
                                         .city
                                 }
+
                                 {order
                                     .shippingAddress
                                     .state
@@ -612,9 +604,11 @@ function OrderResult({
                     {order.items.map(
                         (item) => (
                             <div
-                                key={`${item.productId}-${item.productName}`}
+                                key={`${item.productId}-${item.size}`}
                                 className="flex gap-4 py-4 first:pt-0 last:pb-0"
                             >
+                                {/* Product Image */}
+
                                 <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-[#fff7f0] sm:h-20 sm:w-20">
                                     {item.productImage ? (
                                         <Image
@@ -635,6 +629,8 @@ function OrderResult({
                                     )}
                                 </div>
 
+                                {/* Product Info */}
+
                                 <div className="flex min-w-0 flex-1 items-start justify-between gap-4">
                                     <div className="min-w-0">
                                         <p className="font-semibold leading-5 text-[#3b2419]">
@@ -643,13 +639,29 @@ function OrderResult({
                                             }
                                         </p>
 
-                                        <p className="mt-1 text-sm text-gray-500">
-                                            Qty:{' '}
-                                            {
-                                                item.quantity
-                                            }
-                                        </p>
+                                        <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500">
+                                            <span>
+                                                Size:{' '}
+                                                <span className="font-medium text-gray-700">
+                                                    {item.size ||
+                                                        '—'}
+                                                </span>
+                                            </span>
+
+                                            <span className="text-gray-300">
+                                                •
+                                            </span>
+
+                                            <span>
+                                                Qty:{' '}
+                                                {
+                                                    item.quantity
+                                                }
+                                            </span>
+                                        </div>
                                     </div>
+
+                                    {/* Price */}
 
                                     <div className="shrink-0 text-right">
                                         <p className="font-semibold text-[#3b2419]">
@@ -718,7 +730,6 @@ function OrderResult({
                         className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-orange-200 bg-white px-5 py-2.5 text-sm font-semibold text-[#3b2419] transition hover:border-orange-300 hover:bg-orange-50 sm:w-auto"
                     >
                         <Search className="h-4 w-4" />
-
                         Search another order
                     </Link>
 
@@ -761,7 +772,7 @@ export default async function OrderStatusPage({
     if (hasSearch) {
         if (!orderId || !email) {
             searchError =
-                'Please enter both your order ID and email address.';
+                'Please enter both your order number and email address.';
         } else {
             order =
                 await getOrderByIdAndEmail(
@@ -785,9 +796,7 @@ export default async function OrderStatusPage({
         return (
             <main className="min-h-screen bg-[#fff8f2]">
                 <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-                    <OrderResult
-                        order={order}
-                    />
+                    <OrderResult order={order} />
                 </div>
             </main>
         );
@@ -814,9 +823,10 @@ export default async function OrderStatusPage({
                     </h1>
 
                     <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-gray-500">
-                        Enter your order ID and the email
-                        address used during checkout to see
-                        your order details and current status.
+                        Enter your order number and
+                        the email address used during
+                        checkout to see your order
+                        details and current status.
                     </p>
                 </div>
 

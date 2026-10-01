@@ -17,6 +17,11 @@ import {
 
 import { createProductAction } from './action';
 
+type VariantState = {
+    size: string;
+    stock: string;
+};
+
 type FormState = {
     name: string;
     description: string;
@@ -24,6 +29,7 @@ type FormState = {
     compareAtPrice: string;
     currency: string;
     images: string[];
+    variants: VariantState[];
     isActive: boolean;
 };
 
@@ -34,6 +40,7 @@ const initialForm: FormState = {
     compareAtPrice: '',
     currency: 'USD',
     images: [''],
+    variants: [],
     isActive: true,
 };
 
@@ -172,6 +179,73 @@ export default function ProductCreateForm() {
         }));
     };
 
+    const totalStock = useMemo(
+        () =>
+            form.variants.reduce((total, variant) => {
+                const stock = Number(variant.stock);
+                return total + (Number.isFinite(stock) && stock >= 0 ? stock : 0);
+            }, 0),
+        [form.variants],
+    );
+
+    const addVariant = () => {
+        if (form.variants.length >= 20 || isPending) {
+            return;
+        }
+
+        setForm((prev) => ({
+            ...prev,
+            variants: [...prev.variants, { size: '', stock: '' }],
+        }));
+
+        setErrors((prev) => {
+            const next = { ...prev };
+            delete next.variants;
+            return next;
+        });
+    };
+
+    const updateVariant = (
+        index: number,
+        field: keyof VariantState,
+        value: string,
+    ) => {
+        setForm((prev) => ({
+            ...prev,
+            variants: prev.variants.map((variant, variantIndex) =>
+                variantIndex === index
+                    ? { ...variant, [field]: value }
+                    : variant,
+            ),
+        }));
+
+        setErrors((prev) => {
+            const next = { ...prev };
+            delete next.variants;
+            delete next[`variants.${index}.${field}`];
+            return next;
+        });
+    };
+
+    const removeVariant = (index: number) => {
+        if (isPending) {
+            return;
+        }
+
+        setForm((prev) => ({
+            ...prev,
+            variants: prev.variants.filter(
+                (_, variantIndex) => variantIndex !== index,
+            ),
+        }));
+
+        setErrors((prev) => {
+            const next = { ...prev };
+            delete next.variants;
+            return next;
+        });
+    };
+
     const getFieldError = (field: string) =>
         errors[field]?.[0];
 
@@ -196,6 +270,10 @@ export default function ProductCreateForm() {
             images: form.images
                 .map((image) => image.trim())
                 .filter(Boolean),
+            variants: form.variants.map((variant) => ({
+                size: variant.size.trim(),
+                stock: Number(variant.stock),
+            })),
             isActive: form.isActive,
         };
 
@@ -631,6 +709,128 @@ export default function ProductCreateForm() {
                                         </div>
                                     </div>
                                 )}
+                        </section>
+
+                        {/* Inventory */}
+                        <section className="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm sm:p-6">
+                            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="min-w-0">
+                                    <h2 className="text-base font-semibold text-chocolate sm:text-lg">
+                                        Inventory
+                                    </h2>
+
+                                    <p className="mt-1 text-xs leading-5 text-chocolate-muted sm:text-sm">
+                                        Set the available stock for each size.
+                                    </p>
+                                </div>
+
+                                <div className="w-fit rounded-lg bg-slate-50 px-3 py-2">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                        Total Stock
+                                    </p>
+                                    <p className="mt-0.5 text-sm font-bold text-slate-800">
+                                        {totalStock}
+                                    </p>
+                                </div>
+                            </div>
+
+                            {form.variants.length > 0 && (
+                                <div className="space-y-3">
+                                    {form.variants.map((variant, index) => (
+                                        <div
+                                            key={index}
+                                            className="rounded-xl border border-slate-200 bg-slate-50 p-3"
+                                        >
+                                            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_160px_auto] sm:items-end">
+                                                <div>
+                                                    <label
+                                                        htmlFor={`variant-size-${index}`}
+                                                        className="mb-2 block text-xs font-semibold text-slate-700"
+                                                    >
+                                                        Size
+                                                    </label>
+                                                    <input
+                                                        id={`variant-size-${index}`}
+                                                        type="text"
+                                                        value={variant.size}
+                                                        onChange={(e) =>
+                                                            updateVariant(index, 'size', e.target.value)
+                                                        }
+                                                        disabled={isPending}
+                                                        placeholder="e.g. M"
+                                                        className={`w-full rounded-lg border bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-400 ${
+                                                            getFieldError(`variants.${index}.size`)
+                                                                ? 'border-red-400'
+                                                                : 'border-slate-200'
+                                                        } disabled:cursor-not-allowed disabled:bg-slate-50`}
+                                                    />
+                                                    {getFieldError(`variants.${index}.size`) && (
+                                                        <p className="mt-1.5 text-xs font-medium text-red-500">
+                                                            {getFieldError(`variants.${index}.size`)}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                <div>
+                                                    <label
+                                                        htmlFor={`variant-stock-${index}`}
+                                                        className="mb-2 block text-xs font-semibold text-slate-700"
+                                                    >
+                                                        Stock
+                                                    </label>
+                                                    <input
+                                                        id={`variant-stock-${index}`}
+                                                        type="number"
+                                                        min="0"
+                                                        step="1"
+                                                        inputMode="numeric"
+                                                        value={variant.stock}
+                                                        onChange={(e) =>
+                                                            updateVariant(index, 'stock', e.target.value)
+                                                        }
+                                                        disabled={isPending}
+                                                        placeholder="0"
+                                                        className={`w-full rounded-lg border bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-400 ${
+                                                            getFieldError(`variants.${index}.stock`)
+                                                                ? 'border-red-400'
+                                                                : 'border-slate-200'
+                                                        } disabled:cursor-not-allowed disabled:bg-slate-50`}
+                                                    />
+                                                    {getFieldError(`variants.${index}.stock`) && (
+                                                        <p className="mt-1.5 text-xs font-medium text-red-500">
+                                                            {getFieldError(`variants.${index}.stock`)}
+                                                        </p>
+                                                    )}
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeVariant(index)}
+                                                    disabled={isPending}
+                                                    className="w-full cursor-pointer rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-xs font-semibold text-slate-500 transition hover:border-red-200 hover:bg-red-50 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {getFieldError('variants') && (
+                                <p className="mt-2 text-xs font-medium text-red-500">
+                                    {getFieldError('variants')}
+                                </p>
+                            )}
+
+                            <button
+                                type="button"
+                                onClick={addVariant}
+                                disabled={form.variants.length >= 20 || isPending}
+                                className="mt-4 w-full cursor-pointer rounded-xl border border-dashed border-orange-200 bg-orange-50/50 px-4 py-2.5 text-sm font-semibold text-orange-600 transition hover:border-orange-300 hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
+                            >
+                                + Add size
+                            </button>
                         </section>
 
                         {/* Images */}

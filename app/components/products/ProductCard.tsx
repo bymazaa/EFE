@@ -1,10 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
-
 import { Sparkles } from 'lucide-react';
 
 import { truncate } from '@/lib/utils';
-
 import type { ProductDTO } from '@/services/product.service';
 
 import { AddToCartButtons } from './AddToCartButtons';
@@ -55,9 +53,11 @@ export function ProductCard({
                     )}
 
                     {/* Soft overlay */}
+
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
                     {/* Sale badge */}
+
                     {hasDiscount ? (
                         <span className="absolute left-3 top-3 rounded-full bg-orange-500 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-lg shadow-orange-200 sm:left-4 sm:top-4">
                             Sale
@@ -77,6 +77,7 @@ export function ProductCard({
 
                 <div className="min-w-0 flex-1">
                     {/* Product Name */}
+
                     <Link
                         href={productHref}
                         className="block min-w-0"
@@ -87,6 +88,7 @@ export function ProductCard({
                     </Link>
 
                     {/* Description */}
+
                     {product.description ? (
                         <p className="mt-2 line-clamp-2 text-xs leading-5 text-chocolate-soft sm:text-[13px]">
                             {truncate(
@@ -99,6 +101,7 @@ export function ProductCard({
                     )}
 
                     {/* Price */}
+
                     <div className="mt-3 sm:mt-4">
                         <PriceTag
                             price={product.price}
@@ -119,6 +122,7 @@ export function ProductCard({
                         <AddToCartButtons
                             productId={product.id}
                             productName={product.name}
+                            variants={product.variants}
                         />
                     </div>
                 </div>

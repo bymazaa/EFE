@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -7,18 +6,21 @@ import {
     useEffect,
     useMemo,
     useState,
+    type FormEvent,
 } from 'react';
 
-import {
-    AlertCircle,
-    ArrowLeft,
-} from 'lucide-react';
+import { AlertCircle, ArrowLeft } from 'lucide-react';
 
 import { useRouter } from 'next/navigation';
 
+import { toast } from 'sonner';
+
 import { checkoutSchema } from '@/lib/validation/order.schema';
 
-import { categoryName, DEFAULT_CURRENCY } from '@/lib/constants';
+import {
+    categoryName,
+    DEFAULT_CURRENCY,
+} from '@/lib/constants';
 
 import { useCartStore } from '@/store/cart.store';
 
@@ -29,7 +31,6 @@ import {
 } from './action';
 
 import { ContactInformation } from './components/ContactInformation';
-
 import { ShippingAddress } from './components/ShippingAddress';
 
 import {
@@ -38,6 +39,10 @@ import {
 } from './components/PaymentMethod';
 
 import { OrderSummary } from './components/OrderSummary';
+
+/* ========================================================================== */
+/* Types                                                                      */
+/* ========================================================================== */
 
 interface ContactInfo {
     name: string;
@@ -65,8 +70,16 @@ interface FieldErrors {
     paymentMethod?: string;
 }
 
+/* ========================================================================== */
+/* Component                                                                  */
+/* ========================================================================== */
+
 export function CheckoutPageClient() {
     const router = useRouter();
+
+    /* ======================================================================
+       Cart
+    ====================================================================== */
 
     const cartItems = useCartStore(
         (state) => state.items,
@@ -75,6 +88,10 @@ export function CheckoutPageClient() {
     const clearCart = useCartStore(
         (state) => state.clear,
     );
+
+    /* ======================================================================
+       Form state
+    ====================================================================== */
 
     const [contact, setContact] =
         useState<ContactInfo>({
@@ -95,6 +112,10 @@ export function CheckoutPageClient() {
     const [paymentMethod, setPaymentMethod] =
         useState<PaymentMethodValue>('cod');
 
+    /* ======================================================================
+       Checkout state
+    ====================================================================== */
+
     const [summary, setSummary] =
         useState<CheckoutSummaryDTO | null>(
             null,
@@ -112,34 +133,55 @@ export function CheckoutPageClient() {
     const [fieldErrors, setFieldErrors] =
         useState<FieldErrors>({});
 
-    /*
-     * =============================================================
-     * Load checkout summary
-     * =============================================================
-     */
+    /* ======================================================================
+       Load checkout summary
+    ====================================================================== */
 
     useEffect(() => {
         let cancelled = false;
 
         async function loadCheckout() {
+            /* --------------------------------------------------------------
+               Empty cart
+            -------------------------------------------------------------- */
+
             if (cartItems.length === 0) {
                 if (!cancelled) {
                     setLoading(false);
                     setSummary(null);
+                    setError('');
                 }
 
                 return;
             }
 
+            /* --------------------------------------------------------------
+               Start loading
+            -------------------------------------------------------------- */
+
             setLoading(true);
             setError('');
+
+            /* --------------------------------------------------------------
+               Server-authoritative checkout summary
+            -------------------------------------------------------------- */
 
             const result =
                 await getCheckoutSummaryAction(
                     cartItems,
                 );
 
-            if (cancelled) return;
+            /* --------------------------------------------------------------
+               Ignore outdated request
+            -------------------------------------------------------------- */
+
+            if (cancelled) {
+                return;
+            }
+
+            /* --------------------------------------------------------------
+               Server action failed
+            -------------------------------------------------------------- */
 
             if (!result.success) {
                 setError(
@@ -153,6 +195,10 @@ export function CheckoutPageClient() {
                 return;
             }
 
+            /* --------------------------------------------------------------
+               Missing data
+            -------------------------------------------------------------- */
+
             if (!result.data) {
                 setError(
                     'Unable to load checkout details.',
@@ -163,6 +209,10 @@ export function CheckoutPageClient() {
 
                 return;
             }
+
+            /* --------------------------------------------------------------
+               Store latest summary
+            -------------------------------------------------------------- */
 
             setSummary(result.data);
             setLoading(false);
@@ -175,36 +225,57 @@ export function CheckoutPageClient() {
         };
     }, [cartItems]);
 
-    /*
-     * =============================================================
-     * Availability
-     * =============================================================
-     */
+    /* ======================================================================
+       Availability
+    ====================================================================== */
 
     const hasUnavailableItems = useMemo(() => {
-        if (!summary) return true;
+        if (!summary) {
+            return true;
+        }
 
+        /*
+         * An item is unavailable when:
+         *
+         * 1. Product/size was removed
+         * 2. Product/size is inactive
+         * 3. Cart quantity is greater than current size stock
+         */
         return (
-            summary.removedProductIds.length > 0 ||
+            summary.removedProductIds.length >
+                0 ||
             summary.items.some(
-                (item) => !item.isActive,
+                (item) =>
+                    !item.isActive ||
+                    item.quantity >
+                        item.availableStock,
             )
         );
     }, [summary]);
 
-    /*
-     * =============================================================
-     * Submit
-     * =============================================================
-     */
+    /* ======================================================================
+       Submit
+    ====================================================================== */
 
     const handleSubmit = async (
-        event: React.FormEvent<HTMLFormElement>,
+        event: FormEvent<HTMLFormElement>,
     ) => {
         event.preventDefault();
 
+        /* --------------------------------------------------------------
+           Prevent duplicate submission
+        -------------------------------------------------------------- */
+
+        if (submitting) {
+            return;
+        }
+
         setError('');
         setFieldErrors({});
+
+        /* --------------------------------------------------------------
+           Summary check
+        -------------------------------------------------------------- */
 
         if (!summary) {
             setError(
@@ -214,6 +285,10 @@ export function CheckoutPageClient() {
             return;
         }
 
+        /* --------------------------------------------------------------
+           Availability check
+        -------------------------------------------------------------- */
+
         if (hasUnavailableItems) {
             setError(
                 'Please update your cart before placing the order.',
@@ -222,11 +297,9 @@ export function CheckoutPageClient() {
             return;
         }
 
-        /*
-         * Client-side validation.
-         *
-         * Server validates again.
-         */
+        /* --------------------------------------------------------------
+           Client-side validation
+        -------------------------------------------------------------- */
 
         const checkoutData = {
             customer: contact,
@@ -330,45 +403,64 @@ export function CheckoutPageClient() {
             return;
         }
 
+        /* --------------------------------------------------------------
+           Start placing order
+        -------------------------------------------------------------- */
+
         setSubmitting(true);
 
         /*
-         * Server receives only:
+         * The server receives:
          *
          * customer
          * shippingAddress
          * paymentMethod
-         * cart item ids + quantities
+         * productId
+         * size
+         * quantity
          *
-         * Price is never trusted from client.
+         * Prices, totals and stock are recalculated on the server.
          */
-
         const result =
             await placeOrderAction({
                 ...parsed.data,
                 items: cartItems,
             });
 
-        if (!result.success) {
-            setError(
-                result.error ||
-                    'Unable to place your order.',
-            );
+        /* --------------------------------------------------------------
+           Order failed
+        -------------------------------------------------------------- */
 
+        if (!result.success) {
+            const message =
+                result.error ||
+                'Unable to place your order.';
+
+            setError(message);
             setSubmitting(false);
+
+            toast.error(message);
 
             return;
         }
+
+        /* --------------------------------------------------------------
+           Missing confirmation token
+        -------------------------------------------------------------- */
 
         if (!result.data) {
             setError(
-                'Order was created but no order number was returned.',
+                'Order was created but no confirmation token was returned.',
             );
 
             setSubmitting(false);
 
             return;
         }
+
+        /* --------------------------------------------------------------
+           Order successfully created
+        -------------------------------------------------------------- */
 
         clearCart();
 
@@ -377,11 +469,9 @@ export function CheckoutPageClient() {
         );
     };
 
-    /*
-     * =============================================================
-     * Empty cart
-     * =============================================================
-     */
+    /* ======================================================================
+       Empty cart
+    ====================================================================== */
 
     if (cartItems.length === 0) {
         return (
@@ -393,13 +483,14 @@ export function CheckoutPageClient() {
                         </h1>
 
                         <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-gray-500 sm:text-base">
-                            Add some {categoryName} before
+                            Add some{' '}
+                            {categoryName} before
                             continuing to checkout.
                         </p>
 
                         <Link
                             href="/products"
-                            className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 sm:w-auto"
+                            className="mt-6 inline-flex w-full cursor-pointer items-center justify-center rounded-2xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 sm:w-auto"
                         >
                             Shop {categoryName}
                         </Link>
@@ -409,25 +500,21 @@ export function CheckoutPageClient() {
         );
     }
 
-    /*
-     * =============================================================
-     * Main checkout page
-     * =============================================================
-     */
+    /* ======================================================================
+       Main checkout page
+    ====================================================================== */
 
     return (
         <main className="min-h-screen bg-[#fff8f2]">
             <div className="mx-auto w-full max-w-7xl px-3 py-6 sm:px-6 sm:py-10 lg:px-8 lg:py-12">
-
-                {/* =================================================
+                {/* ==========================================================
                     Header
-                ================================================= */}
+                ========================================================== */}
 
                 <div className="mb-6 sm:mb-8">
-
                     <Link
                         href="/cart"
-                        className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 transition hover:text-orange-600"
+                        className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-gray-500 transition hover:text-orange-600"
                     >
                         <ArrowLeft className="h-4 w-4" />
 
@@ -439,16 +526,16 @@ export function CheckoutPageClient() {
                     </h1>
 
                     <p className="mt-2 max-w-xl text-sm leading-6 text-gray-500 sm:text-base">
-                        Complete your details and place
-                        your order.
+                        Complete your details and
+                        place your order.
                     </p>
                 </div>
 
-                {/* =================================================
-                    General Error
-                ================================================= */}
+                {/* ==========================================================
+                    General error
+                ========================================================== */}
 
-                {error && (
+                {error ? (
                     <div className="mb-5 flex items-start gap-3 rounded-2xl border border-red-100 bg-red-50 p-3.5 text-sm text-red-700 sm:mb-6 sm:p-4">
                         <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
 
@@ -456,38 +543,40 @@ export function CheckoutPageClient() {
                             {error}
                         </p>
                     </div>
-                )}
+                ) : null}
 
-                {/* =================================================
+                {/* ==========================================================
                     Unavailable products
-                ================================================= */}
+                ========================================================== */}
 
                 {summary &&
-                    hasUnavailableItems && (
-                        <div className="mb-5 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800 sm:mb-6">
-                            <p className="font-semibold">
-                                Some items are no longer
-                                available.
-                            </p>
+                hasUnavailableItems ? (
+                    <div className="mb-5 rounded-2xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800 sm:mb-6">
+                        <p className="font-semibold">
+                            Some items are no longer
+                            available.
+                        </p>
 
-                            <p className="mt-1 leading-5">
-                                Please return to your cart
-                                and update it before placing
-                                the order.
-                            </p>
+                        <p className="mt-1 leading-5">
+                            A selected size may have
+                            insufficient stock. Please
+                            return to your cart and
+                            update the quantity before
+                            placing the order.
+                        </p>
 
-                            <Link
-                                href="/cart"
-                                className="mt-3 inline-flex font-semibold text-yellow-900 underline"
-                            >
-                                Update Cart
-                            </Link>
-                        </div>
-                    )}
+                        <Link
+                            href="/cart"
+                            className="mt-3 inline-flex cursor-pointer font-semibold text-yellow-900 underline underline-offset-2"
+                        >
+                            Update Cart
+                        </Link>
+                    </div>
+                ) : null}
 
-                {/* =================================================
+                {/* ==========================================================
                     Loading
-                ================================================= */}
+                ========================================================== */}
 
                 {loading ? (
                     <div className="rounded-3xl border border-orange-100 bg-white p-8 text-center shadow-2xl shadow-gray-50 sm:p-10">
@@ -500,12 +589,11 @@ export function CheckoutPageClient() {
                         onSubmit={handleSubmit}
                         className="grid min-w-0 grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-[minmax(0,1fr)_380px]"
                     >
-                        {/* =================================================
+                        {/* ==================================================
                             Left
-                        ================================================= */}
+                        ================================================== */}
 
                         <div className="min-w-0 space-y-5 sm:space-y-6">
-
                             <ContactInformation
                                 value={contact}
                                 onChange={
@@ -550,12 +638,11 @@ export function CheckoutPageClient() {
                                     fieldErrors.paymentMethod
                                 }
                             />
-
                         </div>
 
-                        {/* =================================================
+                        {/* ==================================================
                             Right
-                        ================================================= */}
+                        ================================================== */}
 
                         <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
                             <OrderSummary
@@ -565,8 +652,16 @@ export function CheckoutPageClient() {
                                             item.productId,
                                         name: item.name,
                                         image: item.image,
+
+                                        /*
+                                         * IMPORTANT:
+                                         * Size must be passed here.
+                                         */
+                                        size: item.size,
+
                                         quantity:
                                             item.quantity,
+
                                         lineTotal:
                                             item.lineTotal,
                                     }),
@@ -590,6 +685,7 @@ export function CheckoutPageClient() {
                                     submitting
                                 }
                                 disabled={
+                                    loading ||
                                     hasUnavailableItems
                                 }
                             />
@@ -600,4 +696,3 @@ export function CheckoutPageClient() {
         </main>
     );
 }
-

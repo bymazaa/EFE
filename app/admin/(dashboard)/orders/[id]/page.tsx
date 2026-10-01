@@ -57,6 +57,10 @@ type OrderDetailsPageProps = {
     }>;
 };
 
+/* ============================================================
+   Order Status Style
+============================================================ */
+
 function getOrderStatusStyle(
     status: string,
 ) {
@@ -115,6 +119,10 @@ function getOrderStatusStyle(
     }
 }
 
+/* ============================================================
+   Payment Status Style
+============================================================ */
+
 function getPaymentStatusStyle(
     status: string,
 ) {
@@ -133,15 +141,16 @@ function getPaymentStatusStyle(
     };
 }
 
+/* ============================================================
+   Page
+============================================================ */
+
 export default async function OrderDetailsPage({
     params,
 }: OrderDetailsPageProps) {
     const { id } = await params;
 
-    const [
-        order,
-        settings,
-    ] = await Promise.all([
+    const [order, settings] = await Promise.all([
         getOrderById(id),
         getSettings(),
     ]);
@@ -150,15 +159,13 @@ export default async function OrderDetailsPage({
         notFound();
     }
 
-    const orderStatus =
-        getOrderStatusStyle(
-            order.orderStatus,
-        );
+    const orderStatus = getOrderStatusStyle(
+        order.orderStatus,
+    );
 
-    const paymentStatus =
-        getPaymentStatusStyle(
-            order.paymentStatus,
-        );
+    const paymentStatus = getPaymentStatusStyle(
+        order.paymentStatus,
+    );
 
     const shippingAddress = [
         order.shippingAddress.address,
@@ -168,13 +175,12 @@ export default async function OrderDetailsPage({
 
     return (
         <>
-            {/* =========================================================
+            {/* =====================================================
                 SCREEN / ADMIN ORDER DETAILS
-            ========================================================= */}
+            ===================================================== */}
 
             <main className="min-h-screen bg-[#fff8f2] p-4 print:hidden sm:p-6 lg:p-8">
                 <div className="mx-auto max-w-7xl space-y-6">
-
                     {/* =================================================
                         Header
                     ================================================= */}
@@ -188,7 +194,6 @@ export default async function OrderDetailsPage({
                                 className="mb-4 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-orange-100 bg-white px-3 py-2 text-sm font-semibold text-chocolate-soft shadow-2xl shadow-gray-50 transition hover:border-orange-200 hover:bg-orange-50 hover:text-chocolate"
                             >
                                 <ArrowLeft className="h-4 w-4" />
-
                                 Back to orders
                             </Link>
 
@@ -200,7 +205,9 @@ export default async function OrderDetailsPage({
 
                                     <div className="mt-1 flex min-w-0 items-center gap-2">
                                         <h1 className="min-w-0 break-all text-2xl font-bold tracking-tight text-chocolate sm:text-3xl">
-                                            {order.orderNumber}
+                                            {
+                                                order.orderNumber
+                                            }
                                         </h1>
 
                                         <CopyButton
@@ -262,7 +269,6 @@ export default async function OrderDetailsPage({
                     ================================================= */}
 
                     <div className="grid gap-4 md:grid-cols-3">
-
                         {/* Customer */}
 
                         <section className="rounded-3xl border border-orange-100 bg-white p-5 shadow-2xl shadow-gray-50">
@@ -410,13 +416,11 @@ export default async function OrderDetailsPage({
                     ================================================= */}
 
                     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-
                         {/* =================================================
                             Left
                         ================================================= */}
 
                         <div className="min-w-0 space-y-6">
-
                             {/* Order Items */}
 
                             <section className="rounded-3xl border border-orange-100 bg-white p-5 shadow-2xl shadow-gray-50 sm:p-6">
@@ -456,7 +460,7 @@ export default async function OrderDetailsPage({
                                             index,
                                         ) => (
                                             <div
-                                                key={`${item.productId}-${index}`}
+                                                key={`${item.productId}-${item.size}-${index}`}
                                                 className="flex min-w-0 flex-col gap-4 rounded-2xl border border-orange-50 bg-[#fffaf6] p-4 sm:flex-row sm:items-center"
                                             >
                                                 {/* Image */}
@@ -493,6 +497,18 @@ export default async function OrderDetailsPage({
                                                     </h3>
 
                                                     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-chocolate-muted">
+                                                        {/* Size */}
+
+                                                        <span>
+                                                            Size:{' '}
+                                                            <span className="font-semibold text-chocolate-soft">
+                                                                {item.size ||
+                                                                    '—'}
+                                                            </span>
+                                                        </span>
+
+                                                        {/* Quantity */}
+
                                                         <span>
                                                             Qty:{' '}
                                                             <span className="font-semibold text-chocolate-soft">
@@ -501,6 +517,8 @@ export default async function OrderDetailsPage({
                                                                 }
                                                             </span>
                                                         </span>
+
+                                                        {/* Unit Price */}
 
                                                         <span>
                                                             Unit price:{' '}
@@ -534,11 +552,9 @@ export default async function OrderDetailsPage({
                                 </div>
                             </section>
 
-                         
-
-                            
-
-                            {/* Shipping Address */}
+                            {/* =================================================
+                                Shipping Address
+                            ================================================= */}
 
                             <section className="rounded-3xl border border-orange-100 bg-white p-5 shadow-2xl shadow-gray-50 sm:p-6">
                                 <div className="mb-6 flex items-center justify-between gap-3">
@@ -548,7 +564,8 @@ export default async function OrderDetailsPage({
                                         </h2>
 
                                         <p className="mt-1 text-sm text-chocolate-soft">
-                                            Delivery destination for this order.
+                                            Delivery destination for this
+                                            order.
                                         </p>
                                     </div>
 
@@ -577,12 +594,11 @@ export default async function OrderDetailsPage({
                                                         .shippingAddress
                                                         .city
                                                 }
-                                                ,{' '}
-                                                {
-                                                    order
-                                                        .shippingAddress
-                                                        .state
-                                                }
+                                                {order
+                                                    .shippingAddress
+                                                    .state
+                                                    ? `, ${order.shippingAddress.state}`
+                                                    : ''}
 
                                                 <br />
 
@@ -591,12 +607,12 @@ export default async function OrderDetailsPage({
                                                         .shippingAddress
                                                         .postalCode
                                                 }
-                                                ,{' '}
-                                                {
-                                                    order
-                                                        .shippingAddress
-                                                        .country
-                                                }
+
+                                                {order
+                                                    .shippingAddress
+                                                    .country
+                                                    ? `, ${order.shippingAddress.country}`
+                                                    : ''}
                                             </p>
                                         </div>
 
@@ -616,7 +632,6 @@ export default async function OrderDetailsPage({
                         ================================================= */}
 
                         <aside className="min-w-0 space-y-6 lg:sticky lg:top-6 lg:self-start">
-
                             {/* Order Summary */}
 
                             <section className="rounded-3xl border border-orange-100 bg-white p-6 shadow-2xl shadow-gray-50">
@@ -640,6 +655,8 @@ export default async function OrderDetailsPage({
                                 </div>
 
                                 <div className="space-y-4">
+                                    {/* Subtotal */}
+
                                     <div className="flex items-center justify-between gap-4 text-sm">
                                         <span className="text-chocolate-soft">
                                             Subtotal
@@ -653,19 +670,26 @@ export default async function OrderDetailsPage({
                                         </span>
                                     </div>
 
-                                    <div className="flex items-center justify-between gap-4 text-sm">
-                                        <span className="text-chocolate-soft">
-                                            Discount
-                                        </span>
+                                    {/* Discount */}
 
-                                        <span className="font-semibold text-emerald-600">
-                                            -
-                                            {formatPrice(
-                                                order.discountAmount,
-                                                order.currency,
-                                            )}
-                                        </span>
-                                    </div>
+                                    {order.discountAmount >
+                                        0 && (
+                                        <div className="flex items-center justify-between gap-4 text-sm">
+                                            <span className="text-chocolate-soft">
+                                                Discount
+                                            </span>
+
+                                            <span className="font-semibold text-emerald-600">
+                                                -
+                                                {formatPrice(
+                                                    order.discountAmount,
+                                                    order.currency,
+                                                )}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Shipping */}
 
                                     <div className="flex items-center justify-between gap-4 text-sm">
                                         <span className="text-chocolate-soft">
@@ -679,6 +703,8 @@ export default async function OrderDetailsPage({
                                             )}
                                         </span>
                                     </div>
+
+                                    {/* Total */}
 
                                     <div className="border-t border-orange-100 pt-4">
                                         <div className="flex items-end justify-between gap-4">
@@ -697,8 +723,7 @@ export default async function OrderDetailsPage({
 
                                             <span className="shrink-0 rounded-full bg-orange-50 px-3 py-1.5 text-xs font-bold text-orange-600">
                                                 {
-                                                    order
-                                                        .currency
+                                                    order.currency
                                                 }
                                             </span>
                                         </div>
@@ -720,7 +745,6 @@ export default async function OrderDetailsPage({
                                 </div>
 
                                 <div className="space-y-4">
-
                                     {/* Method */}
 
                                     <div className="flex items-center justify-between gap-4">
@@ -778,8 +802,7 @@ export default async function OrderDetailsPage({
                                         <div className="mt-2 rounded-xl bg-gray-50 px-3 py-2.5">
                                             <p className="break-all font-mono text-xs text-chocolate-soft">
                                                 {
-                                                    order
-                                                        .transactionId ??
+                                                    order.transactionId ??
                                                     'No transaction ID'
                                                 }
                                             </p>
@@ -813,8 +836,7 @@ export default async function OrderDetailsPage({
 
                                         <p className="mt-0.5 break-words text-sm font-bold capitalize">
                                             {
-                                                order
-                                                    .orderStatus
+                                                order.orderStatus
                                             }
                                         </p>
                                     </div>
@@ -825,9 +847,9 @@ export default async function OrderDetailsPage({
                 </div>
             </main>
 
-            {/* =========================================================
+            {/* =====================================================
                 PRINT ONLY
-            ========================================================= */}
+            ===================================================== */}
 
             <PrintInvoice
                 order={order}
