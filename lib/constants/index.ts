@@ -18,11 +18,14 @@ export const ORDER_NUMBER_START = 10000;
 export const SESSION_COOKIE = 'efe_admin_session';
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 7; // 7 days (seconds)
 
-// purpouse 
-export const printHeightLightPoint="Luxury Streetwear"
-export const categoryName="Streetwear";
+// purpouse
+export const printHeightLightPoint = 'Luxury Streetwear';
+export const categoryName = 'Streetwear';
 
 export const RESET_TOKEN_EXPIRES_IN_MS = 15 * 60 * 1000;
 
-    export const apiKey = process.env.RESEND_API_KEY;
-   export const fromEmail = process.env.MAIL_FROM;
+export const apiKey = process.env.RESEND_API_KEY;
+export const fromEmail = process.env.MAIL_FROM;
+
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+export const SITE_NAME = 'EFE Store';

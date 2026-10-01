@@ -5,13 +5,25 @@ import {
     hasDiscount,
 } from '@/lib/utils';
 
-import { ProductActions } from '@/app/components/admin/ProductActions';
-import { ProductInventory } from '@/app/components/admin/ProductInventory';
+import {
+    ProductActions,
+} from '@/app/components/admin/ProductActions';
 
-import type { ProductDTO } from '@/services/product.service';
+import {
+    ProductInventory,
+} from '@/app/components/admin/ProductInventory';
 
-import { LocalDate } from '../ui/LocalDate';
-import { LocalDateTime } from '../ui/Timeformat';
+import type {
+    ProductDTO,
+} from '@/services/product.service';
+
+import {
+    LocalDate,
+} from '../ui/LocalDate';
+
+import {
+    LocalDateTime,
+} from '../ui/Timeformat';
 
 export function ProductTable({
     products,
@@ -23,18 +35,22 @@ export function ProductTable({
             <table className="w-full min-w-[1120px] text-left text-sm">
                 <thead>
                     <tr className="border-b border-orange-100 bg-orange-50/40">
+                        {/* Image */}
                         <th className="w-20 py-4 pl-5 pr-3 text-xs font-semibold uppercase tracking-wide text-chocolate-muted">
                             Image
                         </th>
 
+                        {/* Created */}
                         <th className="px-3 py-4 text-xs font-semibold uppercase tracking-wide text-chocolate-muted">
                             Created
                         </th>
 
+                        {/* Product */}
                         <th className="px-3 py-4 text-xs font-semibold uppercase tracking-wide text-chocolate-muted">
                             Product
                         </th>
 
+                        {/* Price */}
                         <th className="px-3 py-4 text-xs font-semibold uppercase tracking-wide text-chocolate-muted">
                             Price
                         </th>
@@ -44,14 +60,17 @@ export function ProductTable({
                             Inventory
                         </th>
 
+                        {/* Status */}
                         <th className="px-3 py-4 text-xs font-semibold uppercase tracking-wide text-chocolate-muted">
                             Status
                         </th>
 
+                        {/* Updated */}
                         <th className="px-3 py-4 text-xs font-semibold uppercase tracking-wide text-chocolate-muted">
                             Last updated
                         </th>
 
+                        {/* Actions */}
                         <th className="w-36 py-4 pl-3 pr-5 text-right text-xs font-semibold uppercase tracking-wide text-chocolate-muted">
                             Actions
                         </th>
@@ -71,14 +90,16 @@ export function ProductTable({
                                 key={product.id}
                                 className="group bg-white transition-colors duration-200 hover:bg-orange-50/30"
                             >
-                                {/* Image */}
+                                {/* =================================================
+                                    Image
+                                ================================================= */}
+
                                 <td className="py-4 pl-5 pr-3">
                                     <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-orange-100 bg-orange-50 shadow-sm">
                                         {product.images[0] ? (
                                             <Image
                                                 src={
-                                                    product
-                                                        .images[0]
+                                                    product.images[0]
                                                 }
                                                 alt={
                                                     product.name
@@ -88,15 +109,18 @@ export function ProductTable({
                                                 className="object-cover transition duration-300 group-hover:scale-105"
                                             />
                                         ) : (
-                                            <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-orange-400">
+                                            <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold uppercase tracking-wide text-orange-400">
                                                 No image
                                             </div>
                                         )}
                                     </div>
                                 </td>
 
-                                {/* Created */}
-                                <td className="px-3 py-4">
+                                {/* =================================================
+                                    Created
+                                ================================================= */}
+
+                                <td className="px-3 py-4 align-middle">
                                     <LocalDate
                                         date={
                                             product.createdAt
@@ -104,8 +128,11 @@ export function ProductTable({
                                     />
                                 </td>
 
-                                {/* Product */}
-                                <td className="px-3 py-4">
+                                {/* =================================================
+                                    Product
+                                ================================================= */}
+
+                                <td className="px-3 py-4 align-middle">
                                     <div className="min-w-0">
                                         <p className="max-w-[260px] truncate font-semibold text-chocolate">
                                             {product.name}
@@ -117,8 +144,11 @@ export function ProductTable({
                                     </div>
                                 </td>
 
-                                {/* Price */}
-                                <td className="px-3 py-4">
+                                {/* =================================================
+                                    Price
+                                ================================================= */}
+
+                                <td className="px-3 py-4 align-middle">
                                     <div className="flex flex-col">
                                         <div className="flex items-center gap-2">
                                             <span className="font-semibold text-chocolate">
@@ -128,25 +158,30 @@ export function ProductTable({
                                                 )}
                                             </span>
 
-                                            {discounted && (
+                                            {discounted ? (
                                                 <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold text-orange-600">
                                                     SALE
                                                 </span>
-                                            )}
+                                            ) : null}
                                         </div>
 
-                                        {discounted && (
+                                        {discounted &&
+                                        product.compareAtPrice !==
+                                            null ? (
                                             <span className="mt-1 text-xs text-chocolate-muted line-through">
                                                 {formatPrice(
-                                                    product.compareAtPrice as number,
+                                                    product.compareAtPrice,
                                                     product.currency,
                                                 )}
                                             </span>
-                                        )}
+                                        ) : null}
                                     </div>
                                 </td>
 
-                                {/* Inventory */}
+                                {/* =================================================
+                                    Inventory
+                                ================================================= */}
+
                                 <td className="px-3 py-4 align-middle">
                                     <ProductInventory
                                         variants={
@@ -155,8 +190,11 @@ export function ProductTable({
                                     />
                                 </td>
 
-                                {/* Status */}
-                                <td className="px-3 py-4">
+                                {/* =================================================
+                                    Status
+                                ================================================= */}
+
+                                <td className="px-3 py-4 align-middle">
                                     <span
                                         className={
                                             product.isActive
@@ -178,8 +216,11 @@ export function ProductTable({
                                     </span>
                                 </td>
 
-                                {/* Updated */}
-                                <td className="px-3 py-4">
+                                {/* =================================================
+                                    Last Updated
+                                ================================================= */}
+
+                                <td className="px-3 py-4 align-middle">
                                     <LocalDateTime
                                         date={
                                             product.updatedAt
@@ -187,12 +228,17 @@ export function ProductTable({
                                     />
                                 </td>
 
-                                {/* Actions */}
-                                <td className="py-4 pl-3 pr-5">
+                                {/* =================================================
+                                    Actions
+                                ================================================= */}
+
+                                <td className="py-4 pl-3 pr-5 align-middle">
                                     <div className="flex justify-end">
                                         <div className="rounded-xl border border-orange-100 bg-white p-1 shadow-sm transition group-hover:border-orange-200 group-hover:shadow-md">
                                             <ProductActions
-                                                id={product.id}
+                                                id={
+                                                    product.id
+                                                }
                                                 isActive={
                                                     product.isActive
                                                 }

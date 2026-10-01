@@ -2,21 +2,13 @@
 
 import type { MouseEvent } from 'react';
 
-import {
-    Copy,
-} from 'lucide-react';
+import { Copy } from 'lucide-react';
 
-import {
-    useRouter,
-} from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
-import {
-    useState,
-} from 'react';
+import { useState } from 'react';
 
-import {
-    toast,
-} from 'sonner';
+import { toast } from 'sonner';
 
 import {
     formatDate,
@@ -39,6 +31,7 @@ import type {
 import type {
     PaymentStatus,
 } from '@/lib/constants';
+
 import { LocalDateTime } from '../ui/Timeformat';
 
 interface OrderTableProps {
@@ -73,11 +66,10 @@ export function OrderTable({
             );
 
             window.setTimeout(() => {
-                setCopiedKey(
-                    (current) =>
-                        current === key
-                            ? null
-                            : current,
+                setCopiedKey((current) =>
+                    current === key
+                        ? null
+                        : current,
                 );
             }, 1500);
         } catch {
@@ -168,8 +160,7 @@ export function OrderTable({
 
                                     const extraCount =
                                         Math.max(
-                                            order.items
-                                                .length -
+                                            order.items.length -
                                                 1,
                                             0,
                                         );
@@ -198,7 +189,9 @@ export function OrderTable({
                                             }
                                             className="group cursor-pointer border-b border-border transition-colors duration-150 hover:bg-chocolate/[0.025] last:border-0"
                                         >
-                                            {/* Order */}
+                                            {/* =================================================
+                                                Order
+                                            ================================================= */}
 
                                             <td className="px-7 py-3">
                                                 <div className="flex items-center gap-1.5">
@@ -245,7 +238,9 @@ export function OrderTable({
                                                 </div>
                                             </td>
 
-                                            {/* Customer */}
+                                            {/* =================================================
+                                                Customer
+                                            ================================================= */}
 
                                             <td className="px-3 py-3">
                                                 <div className="min-w-0">
@@ -256,6 +251,8 @@ export function OrderTable({
                                                                 .name
                                                         }
                                                     </p>
+
+                                                    {/* Phone */}
 
                                                     <div className="mt-1 flex items-center gap-1.5">
                                                         <p className="text-xs text-chocolate-muted">
@@ -287,6 +284,8 @@ export function OrderTable({
                                                             <Copy className="h-3.5 w-3.5" />
                                                         </button>
                                                     </div>
+
+                                                    {/* Email */}
 
                                                     <div className="mt-0.5 flex max-w-[210px] items-center gap-1.5">
                                                         <p className="min-w-0 flex-1 truncate text-xs text-chocolate-muted">
@@ -321,35 +320,65 @@ export function OrderTable({
                                                 </div>
                                             </td>
 
-                                            {/* Product */}
+                                            {/* =================================================
+                                                Product
+                                            ================================================= */}
 
-                                            <td className="max-w-[240px] px-3 py-3">
-                                                <p
-                                                    className="truncate text-chocolate-soft"
-                                                    title={
-                                                        firstItem?.productName
-                                                    }
-                                                >
-                                                    {
-                                                        firstItem?.productName ??
-                                                            '—'
-                                                    }
-
-                                                    {extraCount >
-                                                    0 ? (
-                                                        <span className="text-chocolate-muted">
-                                                            {' '}
-                                                            +
+                                            <td className="max-w-[260px] px-3 py-3">
+                                                {firstItem ? (
+                                                    <div className="min-w-0">
+                                                        <p
+                                                            className="truncate text-chocolate-soft"
+                                                            title={
+                                                                firstItem.productName
+                                                            }
+                                                        >
                                                             {
-                                                                extraCount
-                                                            }{' '}
-                                                            more
-                                                        </span>
-                                                    ) : null}
-                                                </p>
+                                                                firstItem.productName
+                                                            }
+
+                                                            {extraCount >
+                                                            0 ? (
+                                                                <span className="text-chocolate-muted">
+                                                                    {' '}
+                                                                    +
+                                                                    {
+                                                                        extraCount
+                                                                    }{' '}
+                                                                    more
+                                                                </span>
+                                                            ) : null}
+                                                        </p>
+
+                                                        <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-chocolate-muted">
+                                                            <span>
+                                                                Size:{' '}
+                                                                <span className="font-semibold text-chocolate-soft">
+                                                                    {firstItem.size ||
+                                                                        '—'}
+                                                                </span>
+                                                            </span>
+
+                                                            <span>
+                                                                Qty:{' '}
+                                                                <span className="font-semibold text-chocolate-soft">
+                                                                    {
+                                                                        firstItem.quantity
+                                                                    }
+                                                                </span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-chocolate-muted">
+                                                        —
+                                                    </span>
+                                                )}
                                             </td>
 
-                                            {/* Amount */}
+                                            {/* =================================================
+                                                Amount
+                                            ================================================= */}
 
                                             <td className="whitespace-nowrap px-3 py-3 font-medium text-chocolate">
                                                 {formatPrice(
@@ -358,7 +387,9 @@ export function OrderTable({
                                                 )}
                                             </td>
 
-                                            {/* Status */}
+                                            {/* =================================================
+                                                Status
+                                            ================================================= */}
 
                                             <td className="px-3 py-3">
                                                 <OrderStatusBadge
@@ -368,7 +399,9 @@ export function OrderTable({
                                                 />
                                             </td>
 
-                                            {/* Payment */}
+                                            {/* =================================================
+                                                Payment
+                                            ================================================= */}
 
                                             <td className="px-3 py-3">
                                                 <PaymentStatusBadge
@@ -378,13 +411,21 @@ export function OrderTable({
                                                 />
                                             </td>
 
-                                            {/* Date */}
+                                            {/* =================================================
+                                                Date
+                                            ================================================= */}
 
                                             <td className="whitespace-nowrap px-3 py-3 text-chocolate-soft">
-                                               <LocalDateTime date={order.createdAt}/>
+                                                <LocalDateTime
+                                                    date={
+                                                        order.createdAt
+                                                    }
+                                                />
                                             </td>
 
-                                            {/* Menu */}
+                                            {/* =================================================
+                                                Menu
+                                            ================================================= */}
 
                                             <td
                                                 className="py-3 pl-3 pr-5 text-right"
@@ -427,8 +468,7 @@ export function OrderTable({
 
                         const extraCount =
                             Math.max(
-                                order.items
-                                    .length -
+                                order.items.length -
                                     1,
                                 0,
                             );
@@ -444,9 +484,7 @@ export function OrderTable({
 
                         return (
                             <article
-                                key={
-                                    order.id
-                                }
+                                key={order.id}
                                 onClick={(
                                     event,
                                 ) =>
@@ -457,7 +495,9 @@ export function OrderTable({
                                 }
                                 className="cursor-pointer rounded-2xl border border-orange-100 bg-white p-4 shadow-sm transition hover:border-amber-300 hover:shadow-md"
                             >
-                                {/* Top */}
+                                {/* =================================================
+                                    Top
+                                ================================================= */}
 
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="min-w-0">
@@ -524,7 +564,9 @@ export function OrderTable({
                                     </div>
                                 </div>
 
-                                {/* Customer */}
+                                {/* =================================================
+                                    Customer
+                                ================================================= */}
 
                                 <div className="mt-4 border-t border-orange-100 pt-3">
                                     <p className="text-sm font-medium text-chocolate">
@@ -602,39 +644,69 @@ export function OrderTable({
                                     </div>
                                 </div>
 
-                                {/* Product */}
+                                {/* =================================================
+                                    Product
+                                ================================================= */}
 
                                 <div className="mt-3 rounded-xl bg-[#fffaf6] px-3 py-2.5">
                                     <p className="text-[10px] font-medium uppercase tracking-wide text-chocolate-muted">
                                         Product
                                     </p>
 
-                                    <p
-                                        className="mt-1 break-words text-sm text-chocolate-soft"
-                                        title={
-                                            firstItem?.productName
-                                        }
-                                    >
-                                        {
-                                            firstItem?.productName ??
-                                                '—'
-                                        }
-
-                                        {extraCount >
-                                        0 ? (
-                                            <span className="text-chocolate-muted">
-                                                {' '}
-                                                +
+                                    {firstItem ? (
+                                        <>
+                                            <p
+                                                className="mt-1 break-words text-sm text-chocolate-soft"
+                                                title={
+                                                    firstItem.productName
+                                                }
+                                            >
                                                 {
-                                                    extraCount
-                                                }{' '}
-                                                more
-                                            </span>
-                                        ) : null}
-                                    </p>
+                                                    firstItem.productName
+                                                }
+
+                                                {extraCount >
+                                                0 ? (
+                                                    <span className="text-chocolate-muted">
+                                                        {' '}
+                                                        +
+                                                        {
+                                                            extraCount
+                                                        }{' '}
+                                                        more
+                                                    </span>
+                                                ) : null}
+                                            </p>
+
+                                            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-chocolate-muted">
+                                                <span>
+                                                    Size:{' '}
+                                                    <span className="font-semibold text-chocolate-soft">
+                                                        {firstItem.size ||
+                                                            '—'}
+                                                    </span>
+                                                </span>
+
+                                                <span>
+                                                    Qty:{' '}
+                                                    <span className="font-semibold text-chocolate-soft">
+                                                        {
+                                                            firstItem.quantity
+                                                        }
+                                                    </span>
+                                                </span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <p className="mt-1 text-sm text-chocolate-muted">
+                                            —
+                                        </p>
+                                    )}
                                 </div>
 
-                                {/* Bottom */}
+                                {/* =================================================
+                                    Bottom
+                                ================================================= */}
 
                                 <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
                                     <div>
@@ -665,7 +737,9 @@ export function OrderTable({
                                     </div>
                                 </div>
 
-                                {/* Date */}
+                                {/* =================================================
+                                    Date
+                                ================================================= */}
 
                                 <div className="mt-3 border-t border-orange-100 pt-2.5">
                                     <p className="text-[11px] text-chocolate-muted">

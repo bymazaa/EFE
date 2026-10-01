@@ -5,8 +5,8 @@ import { Bebas_Neue, DM_Sans } from 'next/font/google';
 import { Toaster } from 'sonner';
 
 import './globals.css';
+import { SITE_NAME, SITE_URL } from '@/lib/constants';
 
-import { PromoPopup } from './components/home/PromoPopup';
 
 /**
  * --------------------------------------------------------------------------
@@ -20,10 +20,9 @@ import { PromoPopup } from './components/home/PromoPopup';
  * Do NOT include a trailing slash.
  */
 
-const SITE_URL =
-    process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
-const SITE_NAME = 'Your Brand Name';
+
+
 
 const SITE_DESCRIPTION =
     'Shop premium streetwear, jackets, sweaters, sweatshirts, and everyday essentials designed with a modern approach to style, comfort, and quality.';
@@ -166,7 +165,7 @@ export const metadata: Metadata = {
                 url: '/og-image.jpg',
                 width: 1200,
                 height: 630,
-                alt: `${SITE_NAME} premium streetwear collection`,
+                alt: `${SITE_NAME } premium streetwear collection`,
             },
         ],
     },
@@ -293,7 +292,6 @@ export default function RootLayout({
             <body className="font-sans antialiased">
                 {children}
 
-                <PromoPopup />
 
                 <Toaster
                     position="top-right"

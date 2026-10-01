@@ -1,5 +1,4 @@
 import {
-    CheckCircle2,
     CreditCard,
     MapPin,
     Package,
@@ -7,26 +6,28 @@ import {
     User,
 } from 'lucide-react';
 
-import { formatPrice } from '@/lib/utils';
-import { LocalDateTime } from '@/app/components/ui/Timeformat';
-import { printHeightLightPoint } from '@/lib/constants';
+import {
+    formatPrice,
+} from '@/lib/utils';
+
+import {
+    LocalDateTime,
+} from '@/app/components/ui/Timeformat';
+
+import {
+    printHeightLightPoint,
+} from '@/lib/constants';
 
 type PrintInvoiceProps = {
     order: {
         orderNumber: string;
-
         createdAt: Date | string;
         updatedAt: Date | string;
-
         orderStatus: string;
-
         paymentMethod: string;
         paymentStatus: string;
-
         transactionId?: string | null;
-
         currency: string;
-
         subtotal: number;
         discountAmount: number;
         shippingCost: number;
@@ -49,6 +50,8 @@ type PrintInvoiceProps = {
         items: Array<{
             productId: string;
             productName: string;
+            productImage?: string;
+            size: string;
             quantity: number;
             unitPrice: number;
             totalPrice: number;
@@ -91,32 +94,44 @@ export function PrintInvoice({
                                     </h1>
 
                                     <p className="text-[8px] uppercase tracking-[0.18em] text-gray-500">
-                                        {printHeightLightPoint}
+                                        {
+                                            printHeightLightPoint
+                                        }
                                     </p>
                                 </div>
                             </div>
 
                             <div className="mt-2 space-y-0.5 text-[9px] leading-4 text-gray-500">
                                 {business.address ? (
-                                    <p>{business.address}</p>
+                                    <p>
+                                        {
+                                            business.address
+                                        }
+                                    </p>
                                 ) : null}
 
                                 <div className="flex flex-wrap gap-x-3 gap-y-0.5">
                                     {business.email ? (
                                         <span>
-                                            {business.email}
+                                            {
+                                                business.email
+                                            }
                                         </span>
                                     ) : null}
 
                                     {business.phone ? (
                                         <span>
-                                            {business.phone}
+                                            {
+                                                business.phone
+                                            }
                                         </span>
                                     ) : null}
 
                                     {business.websiteUrl ? (
                                         <span>
-                                            {business.websiteUrl}
+                                            {
+                                                business.websiteUrl
+                                            }
                                         </span>
                                     ) : null}
                                 </div>
@@ -164,15 +179,21 @@ export function PrintInvoice({
 
                         <div className="space-y-0.5 text-[9px] leading-4">
                             <p className="font-bold text-[#3b2419]">
-                                {order.customer.name}
+                                {
+                                    order.customer.name
+                                }
                             </p>
 
                             <p className="break-all text-gray-600">
-                                {order.customer.email}
+                                {
+                                    order.customer.email
+                                }
                             </p>
 
                             <p className="text-gray-600">
-                                {order.customer.phone}
+                                {
+                                    order.customer.phone
+                                }
                             </p>
                         </div>
                     </div>
@@ -191,33 +212,38 @@ export function PrintInvoice({
                         <div className="space-y-0.5 text-[9px] leading-4 text-gray-600">
                             <p className="font-semibold text-[#3b2419]">
                                 {
-                                    order.shippingAddress
+                                    order
+                                        .shippingAddress
                                         .address
                                 }
                             </p>
 
                             <p>
                                 {
-                                    order.shippingAddress
+                                    order
+                                        .shippingAddress
                                         .city
                                 }
-                                ,{' '}
-                                {
-                                    order.shippingAddress
-                                        .state
-                                }
+
+                                {order
+                                    .shippingAddress
+                                    .state
+                                    ? `, ${order.shippingAddress.state}`
+                                    : ''}
                             </p>
 
                             <p>
                                 {
-                                    order.shippingAddress
+                                    order
+                                        .shippingAddress
                                         .postalCode
                                 }
-                                ,{' '}
-                                {
-                                    order.shippingAddress
-                                        .country
-                                }
+
+                                {order
+                                    .shippingAddress
+                                    .country
+                                    ? `, ${order.shippingAddress.country}`
+                                    : ''}
                             </p>
                         </div>
                     </div>
@@ -240,7 +266,9 @@ export function PrintInvoice({
                                 </span>
 
                                 <span className="font-semibold capitalize text-[#3b2419]">
-                                    {order.orderStatus}
+                                    {
+                                        order.orderStatus
+                                    }
                                 </span>
                             </div>
 
@@ -250,7 +278,9 @@ export function PrintInvoice({
                                 </span>
 
                                 <span className="font-semibold capitalize text-[#3b2419]">
-                                    {order.paymentMethod}
+                                    {
+                                        order.paymentMethod
+                                    }
                                 </span>
                             </div>
 
@@ -260,7 +290,9 @@ export function PrintInvoice({
                                 </span>
 
                                 <span className="font-semibold capitalize text-[#3b2419]">
-                                    {order.paymentStatus}
+                                    {
+                                        order.paymentStatus
+                                    }
                                 </span>
                             </div>
                         </div>
@@ -288,6 +320,10 @@ export function PrintInvoice({
                                 </th>
 
                                 <th className="w-16 px-2 py-1.5 text-center text-[8px] font-bold uppercase tracking-wider text-gray-500">
+                                    Size
+                                </th>
+
+                                <th className="w-16 px-2 py-1.5 text-center text-[8px] font-bold uppercase tracking-wider text-gray-500">
                                     Qty
                                 </th>
 
@@ -308,16 +344,35 @@ export function PrintInvoice({
                                     index,
                                 ) => (
                                     <tr
-                                        key={`${item.productId}-${index}`}
+                                        key={`${item.productId}-${item.size}-${index}`}
                                         className="border-b border-gray-100"
                                     >
+                                        {/* Item */}
+
                                         <td className="px-2 py-1.5 text-[9px] font-semibold text-[#3b2419]">
-                                            {item.productName}
+                                            <span className="break-words">
+                                                {
+                                                    item.productName
+                                                }
+                                            </span>
                                         </td>
 
-                                        <td className="px-2 py-1.5 text-center text-[9px] text-gray-600">
-                                            {item.quantity}
+                                        {/* Size */}
+
+                                        <td className="px-2 py-1.5 text-center text-[9px] font-semibold text-gray-700">
+                                            {item.size ||
+                                                '—'}
                                         </td>
+
+                                        {/* Quantity */}
+
+                                        <td className="px-2 py-1.5 text-center text-[9px] text-gray-600">
+                                            {
+                                                item.quantity
+                                            }
+                                        </td>
+
+                                        {/* Unit Price */}
 
                                         <td className="px-2 py-1.5 text-right text-[9px] text-gray-600">
                                             {formatPrice(
@@ -325,6 +380,8 @@ export function PrintInvoice({
                                                 order.currency,
                                             )}
                                         </td>
+
+                                        {/* Amount */}
 
                                         <td className="px-2 py-1.5 text-right text-[9px] font-semibold text-[#3b2419]">
                                             {formatPrice(
@@ -356,11 +413,16 @@ export function PrintInvoice({
                         </div>
 
                         <p className="mt-1 text-[9px] font-semibold capitalize text-[#3b2419]">
-                            {order.paymentMethod}
+                            {
+                                order.paymentMethod
+                            }
                         </p>
 
                         <p className="mt-0.5 text-[8px] text-gray-500">
-                            Status: {order.paymentStatus}
+                            Status:{' '}
+                            {
+                                order.paymentStatus
+                            }
                         </p>
 
                         <p className="mt-1 break-all font-mono text-[8px] text-gray-500">
@@ -374,6 +436,8 @@ export function PrintInvoice({
 
                     <div>
                         <div className="space-y-1.5 text-[9px]">
+                            {/* Subtotal */}
+
                             <div className="flex items-center justify-between gap-5">
                                 <span className="text-gray-500">
                                     Subtotal
@@ -387,19 +451,26 @@ export function PrintInvoice({
                                 </span>
                             </div>
 
-                            {/* <div className="flex items-center justify-between gap-5">
-                                <span className="text-gray-500">
-                                    Discount
-                                </span>
+                            {/* Discount */}
 
-                                <span className="font-semibold text-emerald-600">
-                                    -
-                                    {formatPrice(
-                                        order.discountAmount,
-                                        order.currency,
-                                    )}
-                                </span>
-                            </div> */}
+                            {/* {order.discountAmount >
+                                0 ? (
+                                <div className="flex items-center justify-between gap-5">
+                                    <span className="text-gray-500">
+                                        Discount
+                                    </span>
+
+                                    <span className="font-semibold text-emerald-600">
+                                        -
+                                        {formatPrice(
+                                            order.discountAmount,
+                                            order.currency,
+                                        )}
+                                    </span>
+                                </div>
+                            ) : null} */}
+
+                            {/* Shipping */}
 
                             <div className="flex items-center justify-between gap-5">
                                 <span className="text-gray-500">
@@ -415,6 +486,8 @@ export function PrintInvoice({
                             </div>
                         </div>
 
+                        {/* Total */}
+
                         <div className="mt-2 border-t-2 border-[#3b2419] pt-2">
                             <div className="flex items-end justify-between gap-5">
                                 <div>
@@ -429,10 +502,6 @@ export function PrintInvoice({
                                         )}
                                     </p>
                                 </div>
-
-                                {/* <span className="rounded-full bg-orange-50 px-2 py-0.5 text-[8px] font-bold uppercase tracking-wide text-orange-600">
-                                    {order.currency}
-                                </span> */}
                             </div>
                         </div>
                     </div>
@@ -452,7 +521,8 @@ export function PrintInvoice({
                     </p>
 
                     <p className="mt-1 text-[7px] text-gray-400">
-                        Invoice #{order.orderNumber}
+                        Invoice #
+                        {order.orderNumber}
                         {' • '}
                         {business.brandName}
                     </p>
