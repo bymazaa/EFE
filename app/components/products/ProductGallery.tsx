@@ -8,6 +8,8 @@ import { ImageIcon } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 
+import { ProductImageZoom } from './ProductImageZoom';
+
 export function ProductGallery({
     images,
     productName,
@@ -21,21 +23,24 @@ export function ProductGallery({
     const gallery =
         images.length > 0 ? images : [''];
 
-    const activeImage = gallery[activeIndex];
+    const activeImage =
+        gallery[activeIndex];
 
     return (
         <div className="space-y-4">
             {/* Main Image */}
+
             <div className="relative overflow-hidden rounded-3xl border border-orange-100 bg-white p-2 shadow-2xl shadow-gray-50">
-                <div className="relative aspect-square overflow-hidden rounded-2xl bg-[#fff7f0]">
+                <div className="relative aspect-[2/3] overflow-hidden rounded-2xl bg-[#fff7f0]">
                     {activeImage ? (
-                        <Image
+                        <ProductImageZoom
                             src={activeImage}
                             alt={productName}
-                            fill
-                            priority
-                            sizes="(min-width: 1024px) 50vw, 100vw"
-                            className="object-cover transition-transform duration-500"
+                            sizes="
+                                (min-width:1280px) 50vw,
+                                (min-width:1024px) 50vw,
+                                100vw
+                            "
                         />
                     ) : (
                         <div className="flex h-full w-full flex-col items-center justify-center text-center">
@@ -53,8 +58,9 @@ export function ProductGallery({
                     )}
 
                     {/* Image counter */}
+
                     {images.length > 1 ? (
-                        <div className="absolute bottom-4 right-4 rounded-full bg-black/45 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md">
+                        <div className="pointer-events-none absolute bottom-4 right-4 z-20 rounded-full bg-black/45 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md">
                             {activeIndex + 1} /{' '}
                             {images.length}
                         </div>
@@ -63,6 +69,7 @@ export function ProductGallery({
             </div>
 
             {/* Thumbnails */}
+
             {images.length > 1 ? (
                 <div className="flex gap-3 overflow-x-auto pb-1">
                     {images.map(
@@ -87,7 +94,7 @@ export function ProductGallery({
                                         isActive
                                     }
                                     className={cn(
-                                        'group relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 bg-white shadow-2xl shadow-gray-50 transition-all duration-200',
+                                        'group relative h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-2xl border-2 bg-white shadow-2xl shadow-gray-50 transition-all duration-200',
                                         isActive
                                             ? 'border-orange-500 ring-4 ring-orange-100'
                                             : 'border-orange-100 hover:border-orange-300',

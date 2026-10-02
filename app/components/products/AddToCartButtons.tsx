@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 import {
+    Check,
     ShoppingBag,
     X,
     Zap,
@@ -21,15 +22,19 @@ import {
 
 import { useCartStore } from '@/store/cart.store';
 
-import { MAX_ITEM_QUANTITY } from '@/lib/validation/cart.schema';
+import {
+    MAX_ITEM_QUANTITY,
+} from '@/lib/validation/cart.schema';
 
 import { cn } from '@/lib/utils';
 
-import { buttonVariants } from '@/app/components/ui/Button';
+import {
+    buttonVariants,
+} from '@/app/components/ui/Button';
 
-/* ------------------------------------------------------------------ */
-/* Types                                                              */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+   Types
+------------------------------------------------------------------ */
 
 interface ProductVariant {
     size: string;
@@ -46,17 +51,17 @@ interface AddToCartButtonsProps {
     layout?: 'row' | 'stack';
 }
 
-/* ------------------------------------------------------------------ */
-/* Helpers                                                            */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+   Helpers
+------------------------------------------------------------------ */
 
 function normalizeSize(size: string) {
     return size.trim().toLowerCase();
 }
 
-/* ------------------------------------------------------------------ */
-/* Component                                                          */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+   Component
+------------------------------------------------------------------ */
 
 export function AddToCartButtons({
     productId,
@@ -70,18 +75,24 @@ export function AddToCartButtons({
     const [isMounted, setIsMounted] =
         useState(false);
 
-    const [isSizePickerOpen, setIsSizePickerOpen] =
-        useState(false);
+    const [
+        isSizePickerOpen,
+        setIsSizePickerOpen,
+    ] = useState(false);
 
-    const [selectedSize, setSelectedSize] =
-        useState('');
+    const [
+        selectedSize,
+        setSelectedSize,
+    ] = useState('');
 
-    const [pendingAction, setPendingAction] =
-        useState<PendingAction>(null);
+    const [
+        pendingAction,
+        setPendingAction,
+    ] = useState<PendingAction>(null);
 
     /* ================================================================
        Portal mount
-    ================================================================= */
+    ================================================================ */
 
     useEffect(() => {
         setIsMounted(true);
@@ -89,7 +100,7 @@ export function AddToCartButtons({
 
     /* ================================================================
        Cart
-    ================================================================= */
+    ================================================================ */
 
     const cartItems = useCartStore(
         (state) => state.items,
@@ -101,7 +112,7 @@ export function AddToCartButtons({
 
     /* ================================================================
        Variants
-    ================================================================= */
+    ================================================================ */
 
     const normalizedVariants = useMemo(() => {
         return variants
@@ -112,13 +123,16 @@ export function AddToCartButtons({
                     variant.stock,
                 ),
             }))
-            .filter((variant) => variant.size);
+            .filter(
+                (variant) => variant.size,
+            );
     }, [variants]);
 
     const availableVariants = useMemo(
         () =>
             normalizedVariants.filter(
-                (variant) => variant.stock > 0,
+                (variant) =>
+                    variant.stock > 0,
             ),
         [normalizedVariants],
     );
@@ -133,18 +147,22 @@ export function AddToCartButtons({
 
     /* ================================================================
        Selected variant
-    ================================================================= */
+    ================================================================ */
 
     const selectedVariant =
         normalizedVariants.find(
             (variant) =>
-                normalizeSize(variant.size) ===
-                normalizeSize(selectedSize),
+                normalizeSize(
+                    variant.size,
+                ) ===
+                normalizeSize(
+                    selectedSize,
+                ),
         ) ?? null;
 
     /* ================================================================
-       Current selected item quantity
-    ================================================================= */
+       Current selected cart quantity
+    ================================================================ */
 
     const selectedCartItemQuantity =
         selectedSize
@@ -152,7 +170,9 @@ export function AddToCartButtons({
                   (item) =>
                       item.productId ===
                           productId &&
-                      normalizeSize(item.size) ===
+                      normalizeSize(
+                          item.size,
+                      ) ===
                           normalizeSize(
                               selectedSize,
                           ),
@@ -161,7 +181,7 @@ export function AddToCartButtons({
 
     /* ================================================================
        Close modal
-    ================================================================= */
+    ================================================================ */
 
     const closeSizePicker = () => {
         setIsSizePickerOpen(false);
@@ -170,21 +190,28 @@ export function AddToCartButtons({
 
     /* ================================================================
        Perform action
-    ================================================================= */
+    ================================================================ */
 
     const handleAction = (
-        action: Exclude<PendingAction, null>,
+        action: Exclude<
+            PendingAction,
+            null
+        >,
         size: string,
     ) => {
         const variant =
             normalizedVariants.find(
                 (item) =>
-                    normalizeSize(item.size) ===
+                    normalizeSize(
+                        item.size,
+                    ) ===
                     normalizeSize(size),
             );
 
         if (!variant) {
-            toast.error('Please select a valid size.');
+            toast.error(
+                'Please select a valid size.',
+            );
             return;
         }
 
@@ -200,7 +227,10 @@ export function AddToCartButtons({
             Math.floor(quantity),
         );
 
-        if (safeQuantity > MAX_ITEM_QUANTITY) {
+        if (
+            safeQuantity >
+            MAX_ITEM_QUANTITY
+        ) {
             toast.info(
                 `You can add up to ${MAX_ITEM_QUANTITY} items.`,
             );
@@ -212,22 +242,28 @@ export function AddToCartButtons({
                 (item) =>
                     item.productId ===
                         productId &&
-                    normalizeSize(item.size) ===
-                        normalizeSize(variant.size),
+                    normalizeSize(
+                        item.size,
+                    ) ===
+                        normalizeSize(
+                            variant.size,
+                        ),
             )?.quantity ?? 0;
 
-        const maximumQuantity = Math.min(
-            variant.stock,
-            MAX_ITEM_QUANTITY,
-        );
+        const maximumQuantity =
+            Math.min(
+                variant.stock,
+                MAX_ITEM_QUANTITY,
+            );
 
         /* ------------------------------------------------------------
-           Add to Cart
+           Add to cart
         ------------------------------------------------------------ */
 
         if (action === 'cart') {
             const nextQuantity =
-                existingQuantity + safeQuantity;
+                existingQuantity +
+                safeQuantity;
 
             if (
                 nextQuantity >
@@ -261,24 +297,22 @@ export function AddToCartButtons({
             );
 
             closeSizePicker();
-
             return;
         }
 
         /* ------------------------------------------------------------
-           Buy Now
+           Buy now
         ------------------------------------------------------------ */
 
-        /*
-         * Preserve the existing behavior:
-         * If the exact product + size is already in cart,
-         * don't unexpectedly increase it.
-         */
         if (existingQuantity === 0) {
-            if (safeQuantity > maximumQuantity) {
+            if (
+                safeQuantity >
+                maximumQuantity
+            ) {
                 toast.info(
                     `Only ${maximumQuantity} available for size ${variant.size}.`,
                 );
+
                 return;
             }
 
@@ -290,16 +324,18 @@ export function AddToCartButtons({
         }
 
         closeSizePicker();
-
         router.push('/cart');
     };
 
     /* ================================================================
        Open size picker
-    ================================================================= */
+    ================================================================ */
 
     const openSizePicker = (
-        action: Exclude<PendingAction, null>,
+        action: Exclude<
+            PendingAction,
+            null
+        >,
     ) => {
         if (!normalizedVariants.length) {
             toast.error(
@@ -315,10 +351,8 @@ export function AddToCartButtons({
             return;
         }
 
-        /*
-         * One-size product:
-         * no modal needed.
-         */
+        /* One size */
+
         if (!hasMultipleSizes) {
             const onlyVariant =
                 availableVariants[0];
@@ -334,14 +368,11 @@ export function AddToCartButtons({
                 action,
                 onlyVariant.size,
             );
-
             return;
         }
 
-        /*
-         * Multiple sizes:
-         * open portal modal.
-         */
+        /* Multiple sizes */
+
         const firstAvailable =
             availableVariants[0];
 
@@ -352,13 +383,12 @@ export function AddToCartButtons({
         );
 
         setPendingAction(action);
-
         setIsSizePickerOpen(true);
     };
 
     /* ================================================================
-       Modal confirm
-    ================================================================= */
+       Confirm
+    ================================================================ */
 
     const handleConfirmSelection = () => {
         if (!pendingAction) {
@@ -366,7 +396,9 @@ export function AddToCartButtons({
         }
 
         if (!selectedSize) {
-            toast.error('Please select a size.');
+            toast.error(
+                'Please select a size.',
+            );
             return;
         }
 
@@ -378,7 +410,7 @@ export function AddToCartButtons({
 
     /* ================================================================
        Button handlers
-    ================================================================= */
+    ================================================================ */
 
     const handleAddToCart = (
         event: MouseEvent<HTMLButtonElement>,
@@ -399,8 +431,8 @@ export function AddToCartButtons({
     };
 
     /* ================================================================
-       Lock body scroll while modal is open
-    ================================================================= */
+       Body scroll lock + Escape
+    ================================================================ */
 
     useEffect(() => {
         if (!isSizePickerOpen) {
@@ -410,7 +442,8 @@ export function AddToCartButtons({
         const previousOverflow =
             document.body.style.overflow;
 
-        document.body.style.overflow = 'hidden';
+        document.body.style.overflow =
+            'hidden';
 
         const handleEscape = (
             event: KeyboardEvent,
@@ -438,13 +471,13 @@ export function AddToCartButtons({
 
     /* ================================================================
        Modal
-    ================================================================= */
+    ================================================================ */
 
     const sizePickerModal =
         isSizePickerOpen && isMounted
             ? createPortal(
                   <div
-                      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 p-4 backdrop-blur-[2px]"
+                      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/35 p-4 backdrop-blur-[3px] sm:p-6"
                       role="dialog"
                       aria-modal="true"
                       aria-labelledby="product-size-picker-title"
@@ -458,54 +491,63 @@ export function AddToCartButtons({
                       }}
                   >
                       <div
-                          className="w-full max-w-md overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-2xl"
+                          className="w-full max-w-[420px] overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-[0_24px_70px_-25px_rgba(59,36,25,0.35)]"
                           onMouseDown={(event) =>
                               event.stopPropagation()
                           }
                       >
-                          {/* =================================================
+                          {/* ==================================================
                               Header
-                          ================================================= */}
+                          ================================================== */}
 
-                          <div className="flex items-start justify-between gap-4 border-b border-orange-100 px-5 py-4 sm:px-6">
-                              <div className="min-w-0">
-                                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-orange-600">
-                                      Select Size
-                                  </p>
+                          <div className="border-b border-orange-100 px-5 py-5 sm:px-6">
+                              <div className="flex items-start justify-between gap-4">
+                                  <div className="min-w-0">
+                                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-orange-600">
+                                          Select size
+                                      </p>
 
-                                  <h2
-                                      id="product-size-picker-title"
-                                      className="mt-1.5 line-clamp-2 font-serif text-xl leading-tight text-chocolate"
+                                      <h2
+                                          id="product-size-picker-title"
+                                          className="mt-2 line-clamp-2 font-serif text-[25px] leading-tight tracking-[-0.01em] text-[#3b2419]"
+                                      >
+                                          {productName}
+                                      </h2>
+                                  </div>
+
+                                  <button
+                                      type="button"
+                                      onClick={
+                                          closeSizePicker
+                                      }
+                                      aria-label="Close size selector"
+                                      className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-orange-100 text-slate-500 transition hover:bg-orange-50 hover:text-[#3b2419]"
                                   >
-                                      {productName}
-                                  </h2>
+                                      <X className="h-4 w-4" />
+                                  </button>
                               </div>
-
-                              <button
-                                  type="button"
-                                  onClick={
-                                      closeSizePicker
-                                  }
-                                  aria-label="Close size selector"
-                                  className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-xl text-slate-500 transition hover:bg-orange-50 hover:text-chocolate"
-                              >
-                                  <X className="h-4 w-4" />
-                              </button>
                           </div>
 
-                          {/* =================================================
+                          {/* ==================================================
                               Body
-                          ================================================= */}
+                          ================================================== */}
 
                           <div className="px-5 py-5 sm:px-6">
-                              <p className="mb-3 text-xs font-medium text-chocolate-soft">
-                                  Choose your preferred
-                                  size.
-                              </p>
+                              <div className="flex items-center justify-between gap-3">
+                                  <div>
+                                      <p className="text-sm font-semibold text-[#3b2419]">
+                                          Choose your size
+                                      </p>
 
-                              {/* Sizes */}
+                                      <p className="mt-0.5 text-[11px] text-gray-400">
+                                          Select one option to continue
+                                      </p>
+                                  </div>
+                              </div>
 
-                              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                              {/* Size buttons */}
+
+                              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
                                   {normalizedVariants.map(
                                       (variant) => {
                                           const isSelected =
@@ -519,6 +561,11 @@ export function AddToCartButtons({
                                           const isOutOfStock =
                                               variant.stock <=
                                               0;
+
+                                          const isLowStock =
+                                              !isOutOfStock &&
+                                              variant.stock <=
+                                                  9;
 
                                           return (
                                               <button
@@ -538,15 +585,30 @@ export function AddToCartButtons({
                                                       isSelected
                                                   }
                                                   className={cn(
-                                                      'flex min-h-12 cursor-pointer flex-col items-center justify-center rounded-xl border px-3 py-2 transition active:scale-[0.98]',
+                                                      'relative flex min-h-[66px] cursor-pointer flex-col items-center justify-center rounded-xl border px-3 py-2.5 transition-all',
                                                       isSelected
-                                                          ? 'border-orange-500 bg-orange-500 text-white'
+                                                          ? 'border-orange-500 bg-orange-500 text-white shadow-md shadow-orange-100'
                                                           : isOutOfStock
-                                                            ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
-                                                            : 'border-orange-100 bg-white text-chocolate hover:border-orange-300 hover:bg-orange-50',
+                                                            ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-300'
+                                                            : 'border-orange-100 bg-white text-[#3b2419] hover:border-orange-300 hover:bg-[#fffaf6]',
                                                   )}
                                               >
-                                                  <span className="text-sm font-bold">
+                                                  {isSelected ? (
+                                                      <span className="absolute right-2 top-2 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white/20">
+                                                          <Check className="h-2.5 w-2.5" />
+                                                      </span>
+                                                  ) : null}
+
+                                                  <span
+                                                      className={cn(
+                                                          'text-sm font-bold',
+                                                          isSelected
+                                                              ? 'text-white'
+                                                              : isOutOfStock
+                                                                ? 'text-gray-300'
+                                                                : 'text-[#3b2419]',
+                                                      )}
+                                                  >
                                                       {
                                                           variant.size
                                                       }
@@ -554,21 +616,19 @@ export function AddToCartButtons({
 
                                                   <span
                                                       className={cn(
-                                                          'mt-0.5 text-[10px]',
+                                                          'mt-1 text-[10px]',
                                                           isSelected
                                                               ? 'text-white/80'
                                                               : isOutOfStock
-                                                                ? 'text-slate-400'
-                                                                : variant.stock <=
-                                                                    9
+                                                                ? 'text-gray-400'
+                                                                : isLowStock
                                                                   ? 'text-orange-600'
                                                                   : 'text-emerald-600',
                                                       )}
                                                   >
                                                       {isOutOfStock
                                                           ? 'Out of stock'
-                                                          : variant.stock <=
-                                                              9
+                                                          : isLowStock
                                                             ? `${variant.stock} left`
                                                             : 'In stock'}
                                                   </span>
@@ -581,102 +641,102 @@ export function AddToCartButtons({
                               {/* Selected information */}
 
                               {selectedVariant ? (
-                                  <div className="mt-4 rounded-xl bg-[#fff8f2] px-4 py-3.5">
-                                      <div className="flex items-center justify-between gap-4">
-                                          <div>
-                                              <p className="text-[11px] text-chocolate-soft">
-                                                  Selected
-                                              </p>
+                                  <div className="mt-4 flex items-center justify-between gap-4 border-y border-orange-100 py-3.5">
+                                      <div>
+                                          <p className="text-[10px] uppercase tracking-[0.12em] text-gray-400">
+                                              Selected
+                                          </p>
 
-                                              <p className="mt-0.5 text-sm font-bold text-chocolate">
-                                                  {
-                                                      selectedVariant.size
-                                                  }
-                                              </p>
-                                          </div>
+                                          <p className="mt-0.5 text-sm font-semibold text-[#3b2419]">
+                                              {
+                                                  selectedVariant.size
+                                              }
+                                          </p>
+                                      </div>
 
-                                          <div className="text-right">
-                                              <p
-                                                  className={cn(
-                                                      'text-xs font-bold',
-                                                      selectedVariant.stock <=
-                                                          0
-                                                          ? 'text-red-500'
-                                                          : selectedVariant.stock <=
-                                                              9
-                                                            ? 'text-orange-600'
-                                                            : 'text-emerald-600',
-                                                  )}
-                                              >
-                                                  {selectedVariant.stock <=
-                                                  0
-                                                      ? 'Out of stock'
-                                                      : `${selectedVariant.stock} available`}
-                                              </p>
-
-                                              {selectedCartItemQuantity >
-                                                  0 && (
-                                                  <p className="mt-0.5 text-[10px] text-chocolate-soft">
-                                                      {
-                                                          selectedCartItemQuantity
-                                                      }{' '}
-                                                      already
-                                                      in cart
-                                                  </p>
+                                      <div className="text-right">
+                                          <p
+                                              className={cn(
+                                                  'text-xs font-semibold',
+                                                  selectedVariant.stock <=
+                                                      0
+                                                      ? 'text-red-500'
+                                                      : selectedVariant.stock <=
+                                                          9
+                                                        ? 'text-orange-600'
+                                                        : 'text-emerald-600',
                                               )}
-                                          </div>
+                                          >
+                                              {selectedVariant.stock <=
+                                              0
+                                                  ? 'Out of stock'
+                                                  : `${selectedVariant.stock} available`}
+                                          </p>
+
+                                          {selectedCartItemQuantity >
+                                          0 ? (
+                                              <p className="mt-0.5 text-[10px] text-gray-400">
+                                                  {
+                                                      selectedCartItemQuantity
+                                                  }{' '}
+                                                  already
+                                                  in cart
+                                              </p>
+                                          ) : null}
                                       </div>
                                   </div>
                               ) : null}
 
-                              {/* Confirm */}
+                              {/* Actions */}
 
-                              <button
-                                  type="button"
-                                  onClick={
-                                      handleConfirmSelection
-                                  }
-                                  disabled={
-                                      !selectedVariant ||
-                                      selectedVariant.stock <=
-                                          0
-                                  }
-                                  className="mt-4 flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-orange-500 px-5 text-sm font-bold text-white shadow-lg shadow-orange-100 transition hover:bg-orange-600 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
-                              >
-                                  {pendingAction ===
-                                  'buy' ? (
-                                      <>
-                                          <Zap
-                                              className="h-4 w-4"
-                                              fill="currentColor"
-                                              strokeWidth={
-                                                  1.6
-                                              }
-                                          />
-                                          Buy Now
-                                      </>
-                                  ) : (
-                                      <>
-                                          <ShoppingBag
-                                              className="h-4 w-4"
-                                              strokeWidth={
-                                                  1.75
-                                              }
-                                          />
-                                          Add to Cart
-                                      </>
-                                  )}
-                              </button>
+                              <div className="mt-4">
+                                  <button
+                                      type="button"
+                                      onClick={
+                                          handleConfirmSelection
+                                      }
+                                      disabled={
+                                          !selectedVariant ||
+                                          selectedVariant.stock <=
+                                              0
+                                      }
+                                      className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-orange-500 px-5 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-400"
+                                  >
+                                      {pendingAction ===
+                                      'buy' ? (
+                                          <>
+                                              <Zap
+                                                  className="h-4 w-4"
+                                                  fill="currentColor"
+                                                  strokeWidth={
+                                                      1.6
+                                                  }
+                                              />
+                                              Buy Now
+                                          </>
+                                      ) : (
+                                          <>
+                                              <ShoppingBag
+                                                  className="h-4 w-4"
+                                                  strokeWidth={
+                                                      1.75
+                                                  }
+                                              />
+                                              Add to Cart
+                                          </>
+                                      )}
+                                  </button>
 
-                              <button
-                                  type="button"
-                                  onClick={
-                                      closeSizePicker
-                                  }
-                                  className="mt-2 h-10 w-full cursor-pointer rounded-xl text-xs font-semibold text-chocolate-soft transition hover:bg-slate-50 hover:text-chocolate"
-                              >
-                                  Cancel
-                              </button>
+                                  <button
+                                      type="button"
+                                      onClick={
+                                          closeSizePicker
+                                      }
+                                      className="mt-2 h-10 w-full cursor-pointer rounded-xl text-xs font-semibold text-gray-500 transition hover:bg-orange-50 hover:text-[#3b2419]"
+                                  >
+                                      Cancel
+                                  </button>
+                              </div>
                           </div>
                       </div>
                   </div>,
@@ -686,7 +746,7 @@ export function AddToCartButtons({
 
     /* ================================================================
        Render
-    ================================================================= */
+    ================================================================ */
 
     return (
         <>
