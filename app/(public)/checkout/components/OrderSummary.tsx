@@ -244,11 +244,11 @@ export function OrderSummary({
                         <Loader2 className="h-4 w-4 animate-spin" />
 
                         <span>
-                            Placing Order...
+                            Processing...
                         </span>
                     </>
                 ) : (
-                    'Place Order'
+                    'Continue to Payment'
                 )}
             </button>
 

@@ -17,20 +17,20 @@ import {
 /* Order item snapshot                                                */
 /* ------------------------------------------------------------------ */
 
-/*
+/**
  * Snapshot of the product at the time of purchase.
  *
  * Editing a product later must NOT change old orders.
  *
  * Example:
  * {
- *   productId,
- *   productName,
- *   productImage,
- *   size: "M",
- *   quantity: 2,
- *   unitPrice: 29.99,
- *   totalPrice: 59.98
+ *     productId,
+ *     productName,
+ *     productImage,
+ *     size: "M",
+ *     quantity: 2,
+ *     unitPrice: 29.99,
+ *     totalPrice: 59.98
  * }
  */
 const orderItemSchema = new Schema(
@@ -53,7 +53,7 @@ const orderItemSchema = new Schema(
             trim: true,
         },
 
-        /*
+        /**
          * Size is stored as part of the order snapshot.
          *
          * Product variants can later change or even be deleted,
@@ -72,9 +72,8 @@ const orderItemSchema = new Schema(
             min: 1,
         },
 
-        /*
-         * Price after product discount.
-         * This is the price actually used for the order.
+        /**
+         * Price actually charged for one unit.
          */
         unitPrice: {
             type: Number,
@@ -82,6 +81,9 @@ const orderItemSchema = new Schema(
             min: 0,
         },
 
+        /**
+         * unitPrice × quantity
+         */
         totalPrice: {
             type: Number,
             required: true,
@@ -99,7 +101,7 @@ const orderItemSchema = new Schema(
 
 const orderSchema = new Schema(
     {
-        /*
+        /**
          * Example:
          * CND-10024
          */
@@ -111,7 +113,7 @@ const orderSchema = new Schema(
         },
 
         /* ---------------------------------------------------------- */
-        /* Customer                                                    */
+        /* Customer                                                     */
         /* ---------------------------------------------------------- */
 
         customer: {
@@ -136,7 +138,7 @@ const orderSchema = new Schema(
         },
 
         /* ---------------------------------------------------------- */
-        /* Shipping address                                            */
+        /* Shipping address                                             */
         /* ---------------------------------------------------------- */
 
         shippingAddress: {
@@ -197,9 +199,8 @@ const orderSchema = new Schema(
             min: 0,
         },
 
-        /*
+        /**
          * Total product discount.
-         * Useful for reporting and analytics.
          */
         discountAmount: {
             type: Number,
@@ -213,8 +214,8 @@ const orderSchema = new Schema(
             min: 0,
         },
 
-        /*
-         * subtotal + shippingCost
+        /**
+         * Final amount charged for the order.
          */
         totalAmount: {
             type: Number,
@@ -243,10 +244,11 @@ const orderSchema = new Schema(
         /* Payment                                                      */
         /* ---------------------------------------------------------- */
 
-        /*
-         * PayPal-ready.
-         * This can later be updated after server-side payment
-         * verification.
+        /**
+         * Current payment state.
+         *
+         * This is updated after the payment provider confirms
+         * the payment result.
          */
         paymentStatus: {
             type: String,
@@ -254,13 +256,46 @@ const orderSchema = new Schema(
             default: 'pending',
         },
 
+        /**
+         * Payment method selected by the customer.
+         *
+         * Supported methods:
+         * - paypal
+         * - paylater
+         * - venmo
+         * - applepay
+         * - googlepay
+         */
         paymentMethod: {
             type: String,
             enum: PAYMENT_METHODS,
-            default: 'cod',
+            required: true,
         },
 
-        /*
+        /**
+         * PayPal order ID.
+         *
+         * This is created before the customer approves
+         * the payment.
+         */
+        providerOrderId: {
+            type: String,
+            default: null,
+            trim: true,
+        },
+
+        /**
+         * PayPal capture ID.
+         *
+         * Filled after a successful payment capture.
+         */
+        providerCaptureId: {
+            type: String,
+            default: null,
+            trim: true,
+        },
+
+        /**
          * Hash of the confirmation token used by the
          * public order-confirmation page.
          */
@@ -270,19 +305,7 @@ const orderSchema = new Schema(
             unique: true,
             index: true,
         },
-
-        /*
-         * PayPal transaction ID or another gateway transaction ID.
-         *
-         * Filled later after server-side payment verification.
-         */
-        transactionId: {
-            type: String,
-            default: null,
-            trim: true,
-        },
     },
-
     {
         timestamps: true,
     },

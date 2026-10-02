@@ -18,7 +18,7 @@ import {
 import { cartItemsSchema } from './cart.schema';
 
 /* ------------------------------------------------------------------ */
-/* Customer                                                            */
+/* Customer                                                           */
 /* ------------------------------------------------------------------ */
 
 export const customerInfoSchema = z.object({
@@ -70,14 +70,24 @@ export const checkoutSchema = z.object({
 
     shippingAddress: shippingAddressSchema,
 
+    /**
+     * Customer-selected payment method.
+     *
+     * PAYMENT_METHODS currently contains:
+     * - paypal
+     * - paylater
+     * - venmo
+     * - applepay
+     * - googlepay
+     */
     paymentMethod: z.enum(PAYMENT_METHODS),
 });
 
 /* ------------------------------------------------------------------ */
 /* Place order                                                        */
-/*                                                                     */
-/* Contains cart items only. Prices/totals are NOT trusted from the   */
-/* client. The server reads current product prices from the database. */
+/*                                                                      */
+/* Contains cart items only. Prices/totals are NOT trusted from       */
+/* the client. The server reads current product prices from DB.       */
 /* ------------------------------------------------------------------ */
 
 export const placeOrderSchema = checkoutSchema.extend({
@@ -105,13 +115,14 @@ export const ORDER_SORT_OPTIONS = [
     'amount_asc',
 ] as const;
 
-export type OrderSort = (typeof ORDER_SORT_OPTIONS)[number];
+export type OrderSort =
+    (typeof ORDER_SORT_OPTIONS)[number];
 
 /* ------------------------------------------------------------------ */
 /* Admin order list query                                             */
-/*                                                                     */
+/*                                                                      */
 /* Example:                                                           */
-/* /admin/orders?page=1&search=&orderStatus=&paymentStatus=&sort=    */
+/* /admin/orders?page=1&search=&orderStatus=&paymentStatus=&sort=     */
 /* ------------------------------------------------------------------ */
 
 export const orderListQuerySchema = z.object({
@@ -119,7 +130,7 @@ export const orderListQuerySchema = z.object({
 
     search: searchSchema,
 
-    /*
+    /**
      * Invalid or "all" values become undefined
      * instead of throwing a validation error.
      */
@@ -133,7 +144,7 @@ export const orderListQuerySchema = z.object({
         .optional()
         .catch(undefined),
 
-    /*
+    /**
      * Defaults to newest when missing or invalid.
      */
     sort: z
@@ -143,7 +154,7 @@ export const orderListQuerySchema = z.object({
 
 /* ------------------------------------------------------------------ */
 /* Order confirmation                                                 */
-/*                                                                     */
+/*                                                                      */
 /* Example: CND-10024                                                 */
 /* ------------------------------------------------------------------ */
 

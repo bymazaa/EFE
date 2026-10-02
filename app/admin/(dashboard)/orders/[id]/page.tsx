@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import Link from 'next/link';
+
 import { notFound } from 'next/navigation';
 
 import {
@@ -57,9 +58,9 @@ type OrderDetailsPageProps = {
     }>;
 };
 
-/* ============================================================
-   Order Status Style
-============================================================ */
+/* ============================================================= */
+/* Order Status Style                                             */
+/* ============================================================= */
 
 function getOrderStatusStyle(
     status: string,
@@ -69,7 +70,8 @@ function getOrderStatusStyle(
             return {
                 wrapper:
                     'border-blue-100 bg-blue-50 text-blue-700',
-                dot: 'bg-blue-500',
+                dot:
+                    'bg-blue-500',
                 icon: (
                     <CheckCircle2
                         className="h-4 w-4"
@@ -82,7 +84,8 @@ function getOrderStatusStyle(
             return {
                 wrapper:
                     'border-emerald-100 bg-emerald-50 text-emerald-700',
-                dot: 'bg-emerald-500',
+                dot:
+                    'bg-emerald-500',
                 icon: (
                     <Truck
                         className="h-4 w-4"
@@ -95,7 +98,8 @@ function getOrderStatusStyle(
             return {
                 wrapper:
                     'border-red-100 bg-red-50 text-red-700',
-                dot: 'bg-red-500',
+                dot:
+                    'bg-red-500',
                 icon: (
                     <XCircle
                         className="h-4 w-4"
@@ -108,7 +112,8 @@ function getOrderStatusStyle(
             return {
                 wrapper:
                     'border-amber-100 bg-amber-50 text-amber-700',
-                dot: 'bg-amber-500',
+                dot:
+                    'bg-amber-500',
                 icon: (
                     <Clock3
                         className="h-4 w-4"
@@ -119,57 +124,115 @@ function getOrderStatusStyle(
     }
 }
 
-/* ============================================================
-   Payment Status Style
-============================================================ */
+/* ============================================================= */
+/* Payment Status Style                                           */
+/* ============================================================= */
 
 function getPaymentStatusStyle(
     status: string,
 ) {
-    if (status === 'paid') {
-        return {
-            wrapper:
-                'border-emerald-100 bg-emerald-50 text-emerald-700',
-            dot: 'bg-emerald-500',
-        };
-    }
+    switch (status) {
+        case 'paid':
+            return {
+                wrapper:
+                    'border-emerald-100 bg-emerald-50 text-emerald-700',
+                dot:
+                    'bg-emerald-500',
+            };
 
-    return {
-        wrapper:
-            'border-amber-100 bg-amber-50 text-amber-700',
-        dot: 'bg-amber-500',
-    };
+        case 'failed':
+            return {
+                wrapper:
+                    'border-red-100 bg-red-50 text-red-700',
+                dot:
+                    'bg-red-500',
+            };
+
+        case 'refunded':
+            return {
+                wrapper:
+                    'border-blue-100 bg-blue-50 text-blue-700',
+                dot:
+                    'bg-blue-500',
+            };
+
+        default:
+            return {
+                wrapper:
+                    'border-amber-100 bg-amber-50 text-amber-700',
+                dot:
+                    'bg-amber-500',
+            };
+    }
 }
 
-/* ============================================================
-   Page
-============================================================ */
+/* ============================================================= */
+/* Payment Method Label                                           */
+/* ============================================================= */
+
+function getPaymentMethodLabel(
+    method: string,
+) {
+    switch (method) {
+        case 'paypal':
+            return 'PayPal';
+
+        case 'paylater':
+            return 'Pay Later';
+
+        case 'venmo':
+            return 'Venmo';
+
+        case 'applepay':
+            return 'Apple Pay';
+
+        case 'googlepay':
+            return 'Google Pay';
+
+        default:
+            return method;
+    }
+}
+
+/* ============================================================= */
+/* Page                                                            */
+/* ============================================================= */
 
 export default async function OrderDetailsPage({
     params,
 }: OrderDetailsPageProps) {
     const { id } = await params;
 
-    const [order, settings] = await Promise.all([
-        getOrderById(id),
-        getSettings(),
-    ]);
+    const [order, settings] =
+        await Promise.all([
+            getOrderById(id),
+            getSettings(),
+        ]);
 
     if (!order) {
         notFound();
     }
 
-    const orderStatus = getOrderStatusStyle(
-        order.orderStatus,
-    );
+    const orderStatus =
+        getOrderStatusStyle(
+            order.orderStatus,
+        );
 
-    const paymentStatus = getPaymentStatusStyle(
-        order.paymentStatus,
-    );
+    const paymentStatus =
+        getPaymentStatusStyle(
+            order.paymentStatus,
+        );
+
+    const paymentMethod =
+        getPaymentMethodLabel(
+            order.paymentMethod,
+        );
 
     const shippingAddress = [
         order.shippingAddress.address,
+
         `${order.shippingAddress.city}, ${order.shippingAddress.state}`,
+
         `${order.shippingAddress.postalCode}, ${order.shippingAddress.country}`,
     ].join(', ');
 
@@ -194,6 +257,7 @@ export default async function OrderDetailsPage({
                                 className="mb-4 inline-flex cursor-pointer items-center gap-2 rounded-xl border border-orange-100 bg-white px-3 py-2 text-sm font-semibold text-chocolate-soft shadow-2xl shadow-gray-50 transition hover:border-orange-200 hover:bg-orange-50 hover:text-chocolate"
                             >
                                 <ArrowLeft className="h-4 w-4" />
+
                                 Back to orders
                             </Link>
 
@@ -226,9 +290,13 @@ export default async function OrderDetailsPage({
                                         className={`h-1.5 w-1.5 rounded-full ${orderStatus.dot}`}
                                     />
 
-                                    {orderStatus.icon}
+                                    {
+                                        orderStatus.icon
+                                    }
 
-                                    {order.orderStatus}
+                                    {
+                                        order.orderStatus
+                                    }
                                 </span>
                             </div>
 
@@ -333,7 +401,9 @@ export default async function OrderDetailsPage({
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
                                     <User
                                         className="h-5 w-5"
-                                        strokeWidth={1.8}
+                                        strokeWidth={
+                                            1.8
+                                        }
                                     />
                                 </div>
                             </div>
@@ -348,10 +418,9 @@ export default async function OrderDetailsPage({
                                         Payment
                                     </p>
 
-                                    <p className="mt-2 break-words text-lg font-bold capitalize text-chocolate">
+                                    <p className="mt-2 break-words text-lg font-bold text-chocolate">
                                         {
-                                            order
-                                                .paymentMethod
+                                            paymentMethod
                                         }
                                     </p>
 
@@ -363,8 +432,7 @@ export default async function OrderDetailsPage({
                                         />
 
                                         {
-                                            order
-                                                .paymentStatus
+                                            order.paymentStatus
                                         }
                                     </span>
                                 </div>
@@ -372,7 +440,9 @@ export default async function OrderDetailsPage({
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
                                     <CreditCard
                                         className="h-5 w-5"
-                                        strokeWidth={1.8}
+                                        strokeWidth={
+                                            1.8
+                                        }
                                     />
                                 </div>
                             </div>
@@ -404,7 +474,9 @@ export default async function OrderDetailsPage({
                                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
                                     <CalendarDays
                                         className="h-5 w-5"
-                                        strokeWidth={1.8}
+                                        strokeWidth={
+                                            1.8
+                                        }
                                     />
                                 </div>
                             </div>
@@ -436,7 +508,8 @@ export default async function OrderDetailsPage({
                                                     .items
                                                     .length
                                             }{' '}
-                                            {order.items
+                                            {order
+                                                .items
                                                 .length ===
                                             1
                                                 ? 'product'
@@ -448,7 +521,9 @@ export default async function OrderDetailsPage({
                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
                                         <Package
                                             className="h-5 w-5"
-                                            strokeWidth={1.8}
+                                            strokeWidth={
+                                                1.8
+                                            }
                                         />
                                     </div>
                                 </div>
@@ -564,15 +639,16 @@ export default async function OrderDetailsPage({
                                         </h2>
 
                                         <p className="mt-1 text-sm text-chocolate-soft">
-                                            Delivery destination for this
-                                            order.
+                                            Delivery destination for this order.
                                         </p>
                                     </div>
 
                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
                                         <MapPin
                                             className="h-5 w-5"
-                                            strokeWidth={1.8}
+                                            strokeWidth={
+                                                1.8
+                                            }
                                         />
                                     </div>
                                 </div>
@@ -594,6 +670,7 @@ export default async function OrderDetailsPage({
                                                         .shippingAddress
                                                         .city
                                                 }
+
                                                 {order
                                                     .shippingAddress
                                                     .state
@@ -639,7 +716,9 @@ export default async function OrderDetailsPage({
                                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-orange-500">
                                         <ReceiptText
                                             className="h-5 w-5"
-                                            strokeWidth={1.8}
+                                            strokeWidth={
+                                                1.8
+                                            }
                                         />
                                     </div>
 
@@ -731,7 +810,9 @@ export default async function OrderDetailsPage({
                                 </div>
                             </section>
 
-                            {/* Payment Details */}
+                            {/* =================================================
+                                Payment Details
+                            ================================================= */}
 
                             <section className="rounded-3xl border border-orange-100 bg-white p-6 shadow-2xl shadow-gray-50">
                                 <div className="mb-5">
@@ -740,7 +821,9 @@ export default async function OrderDetailsPage({
                                     </h2>
 
                                     <p className="mt-1 text-sm text-chocolate-soft">
-                                        Transaction information.
+                                        Payment
+                                        information for
+                                        this order.
                                     </p>
                                 </div>
 
@@ -752,10 +835,9 @@ export default async function OrderDetailsPage({
                                             Method
                                         </span>
 
-                                        <span className="break-words text-right text-sm font-semibold capitalize text-chocolate">
+                                        <span className="break-words text-right text-sm font-semibold text-chocolate">
                                             {
-                                                order
-                                                    .paymentMethod
+                                                paymentMethod
                                             }
                                         </span>
                                     </div>
@@ -775,43 +857,68 @@ export default async function OrderDetailsPage({
                                             />
 
                                             {
-                                                order
-                                                    .paymentStatus
+                                                order.paymentStatus
                                             }
                                         </span>
                                     </div>
 
-                                    {/* Transaction */}
+                                    {/* Provider Order ID */}
 
                                     <div className="border-t border-orange-100 pt-4">
                                         <div className="flex items-center justify-between gap-2">
                                             <p className="text-xs font-medium uppercase tracking-wide text-chocolate-muted">
-                                                Transaction ID
+                                                Provider Order ID
                                             </p>
 
-                                            {order.transactionId ? (
+                                            {order.providerOrderId ? (
                                                 <CopyButton
                                                     value={
-                                                        order.transactionId
+                                                        order.providerOrderId
                                                     }
-                                                    label="Transaction ID"
+                                                    label="Provider Order ID"
                                                 />
                                             ) : null}
                                         </div>
 
                                         <div className="mt-2 rounded-xl bg-gray-50 px-3 py-2.5">
                                             <p className="break-all font-mono text-xs text-chocolate-soft">
-                                                {
-                                                    order.transactionId ??
-                                                    'No transaction ID'
-                                                }
+                                                {order.providerOrderId ??
+                                                    'Not available'}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Provider Capture ID */}
+
+                                    <div>
+                                        <div className="flex items-center justify-between gap-2">
+                                            <p className="text-xs font-medium uppercase tracking-wide text-chocolate-muted">
+                                                Provider Capture ID
+                                            </p>
+
+                                            {order.providerCaptureId ? (
+                                                <CopyButton
+                                                    value={
+                                                        order.providerCaptureId
+                                                    }
+                                                    label="Provider Capture ID"
+                                                />
+                                            ) : null}
+                                        </div>
+
+                                        <div className="mt-2 rounded-xl bg-gray-50 px-3 py-2.5">
+                                            <p className="break-all font-mono text-xs text-chocolate-soft">
+                                                {order.providerCaptureId ??
+                                                    'Not available'}
                                             </p>
                                         </div>
                                     </div>
                                 </div>
                             </section>
 
-                            {/* Order Status */}
+                            {/* =================================================
+                                Order Status
+                            ================================================= */}
 
                             <section className="rounded-3xl border border-orange-100 bg-white p-6 shadow-2xl shadow-gray-50">
                                 <div className="mb-5">
@@ -827,7 +934,9 @@ export default async function OrderDetailsPage({
                                 <div
                                     className={`flex items-center gap-3 rounded-2xl border p-4 ${orderStatus.wrapper}`}
                                 >
-                                    {orderStatus.icon}
+                                    {
+                                        orderStatus.icon
+                                    }
 
                                     <div className="min-w-0">
                                         <p className="text-xs opacity-70">
@@ -856,12 +965,16 @@ export default async function OrderDetailsPage({
                 business={{
                     brandName:
                         settings.brandName,
+
                     address:
                         settings.address,
+
                     websiteUrl:
                         settings.websiteUrl,
+
                     phone:
                         settings.phone,
+
                     email:
                         settings.email,
                 }}

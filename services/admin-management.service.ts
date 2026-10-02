@@ -12,6 +12,7 @@ import {
     type AdminDB,
     type AdminStatus,
 } from '@/models/Admin';
+import { sendAdminCreatedEmail } from '@/lib/mail';
 
 type AdminDocument = HydratedDocument<AdminDB>;
 
@@ -289,23 +290,24 @@ export async function getAdmins(
  * - Every newly created admin is normal admin.
  * - New admins start as active.
  */
+
+
+
+
 export async function createAdmin(
     actorAdminId: string,
     input: CreateAdminInput,
 ): Promise<AdminDTO> {
     await connectDB();
 
-    await assertSuperAdmin(
-        actorAdminId,
-    );
+    await assertSuperAdmin(actorAdminId);
 
     const name = input.name.trim();
 
     const email =
         input.email.trim().toLowerCase();
 
-    const password =
-        input.password;
+    const password = input.password;
 
     if (!name) {
         throw new Error(
@@ -337,9 +339,7 @@ export async function createAdmin(
     }
 
     const passwordHash =
-        await hashPassword(
-            password,
-        );
+        await hashPassword(password);
 
     try {
         const admin =
@@ -348,23 +348,32 @@ export async function createAdmin(
                 email,
                 passwordHash,
 
-                // New users are always
-                // normal admins.
+                // New users are always normal admins.
                 isSuperAdmin: false,
 
                 // New admins start active.
                 status: 'active',
 
                 tokenVersion: 0,
+
                 failedLoginAttempts: 0,
+
                 lockUntil: null,
 
-                resetPasswordTokenHash:
-                    null,
+                resetPasswordTokenHash: null,
 
-                resetPasswordTokenExpiresAt:
-                    null,
+                resetPasswordTokenExpiresAt: null,
             });
+
+        /*
+         * Send credentials after the admin
+         * has been successfully created.
+         */
+        await sendAdminCreatedEmail({
+            email: admin.email,
+            name: admin.name,
+            password,
+        });
 
         return toDTO(admin);
     } catch (error: unknown) {
@@ -372,8 +381,7 @@ export async function createAdmin(
             typeof error === 'object' &&
             error !== null &&
             'code' in error &&
-            (error as { code?: number })
-                .code === 11000
+            (error as { code?: number }).code === 11000
         ) {
             throw new Error(
                 'An admin with this email already exists.',
@@ -383,6 +391,7 @@ export async function createAdmin(
         throw error;
     }
 }
+
 
 /* ============================================================
    Set Admin Status

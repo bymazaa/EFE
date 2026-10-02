@@ -25,6 +25,7 @@ import {
     validationFail,
     handleError,
 } from '@/lib/action-result';
+import { sendPasswordChangedEmail } from '@/lib/mail';
 
 const MAX_FAILED_ATTEMPTS = 5;
 
@@ -307,9 +308,7 @@ export async function changePassword(
     data: unknown,
 ): Promise<ActionResult> {
     const parsed =
-        changePasswordSchema.safeParse(
-            data,
-        );
+        changePasswordSchema.safeParse(data);
 
     if (!parsed.success) {
         return validationFail(
@@ -334,25 +333,20 @@ export async function changePassword(
         }
 
         /* ----------------------------------------------------------
-           Account protection
-        ----------------------------------------------------------- */
-
-        if (
-            admin.status !== 'active'
-        ) {
+         * Account protection
+         * ---------------------------------------------------------- */
+        if (admin.status !== 'active') {
             return fail(
                 'This account is not active.',
             );
         }
 
         /* ----------------------------------------------------------
-           Current password
-        ----------------------------------------------------------- */
-
+         * Current password
+         * ---------------------------------------------------------- */
         const validCurrent =
             await verifyPassword(
-                parsed.data
-                    .currentPassword,
+                parsed.data.currentPassword,
                 admin.passwordHash,
             );
 
@@ -368,9 +362,8 @@ export async function changePassword(
         }
 
         /* ----------------------------------------------------------
-           Password update
-        ----------------------------------------------------------- */
-
+         * Password update
+         * ---------------------------------------------------------- */
         admin.passwordHash =
             await hashPassword(
                 parsed.data.newPassword,
@@ -392,10 +385,28 @@ export async function changePassword(
          * state if present.
          */
         admin.resetPasswordTokenHash = null;
-        admin.resetPasswordTokenExpiresAt =
-            null;
+        admin.resetPasswordTokenExpiresAt = null;
 
         await admin.save();
+
+        /* ----------------------------------------------------------
+         * Password changed email
+         * ---------------------------------------------------------- */
+        try {
+            await sendPasswordChangedEmail({
+                email: admin.email,
+                name: admin.name,
+            });
+        } catch (error) {
+            /*
+             * Email failure should not undo a successful
+             * password change.
+             */
+            console.error(
+                'Failed to send password changed email:',
+                error,
+            );
+        }
 
         /*
          * Destroy current session too.

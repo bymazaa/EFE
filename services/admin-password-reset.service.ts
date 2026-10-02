@@ -1,155 +1,65 @@
+
 import 'server-only';
 
-import { createHash, randomBytes } from 'crypto';
+import { randomBytes } from 'crypto';
 
 import { connectDB } from '@/lib/mongodb';
+
 import { Admin } from '@/models/Admin';
+
 import { hashPassword } from '@/lib/password';
+
 import { RESET_TOKEN_EXPIRES_IN_MS } from '@/lib/constants';
-import { sendEmail } from '@/lib/email'; // <-- তোমার sendEmail utility-এর actual path দাও
+
 import { hashConfirmationToken } from '@/lib/token';
+
+import { sendPasswordResetEmail } from '@/lib/mail';
 
 /* =========================================================
  * Token helpers
  * ========================================================= */
 
+/**
+ * Generates a cryptographically secure raw reset token.
+ *
+ * Only the hash of this token is stored in MongoDB.
+ * The raw token is sent to the admin through email.
+ */
+function generatePasswordResetToken(): {
+    rawToken: string;
+    tokenHash: string;
+} {
+    const rawToken = randomBytes(32).toString('hex');
+
+    const tokenHash =
+        hashConfirmationToken(rawToken);
+
+    return {
+        rawToken,
+        tokenHash,
+    };
+}
+
 /* =========================================================
  * Password Reset Email
  * ========================================================= */
 
-async function sendPasswordResetEmail({
+/**
+ * Sends the admin password-reset email.
+ *
+ * The actual email template and Resend integration live
+ * inside `sendPasswordResetEmail()`.
+ */
+async function sendAdminPasswordResetEmail({
     email,
     resetUrl,
 }: {
     email: string;
     resetUrl: string;
 }): Promise<void> {
-    const html = `
-        <div
-            style="
-                max-width: 560px;
-                margin: 0 auto;
-                padding: 24px;
-                font-family: Arial, sans-serif;
-                color: #2f211a;
-            "
-        >
-            <h2
-                style="
-                    margin: 0 0 16px;
-                    font-size: 24px;
-                    line-height: 1.3;
-                "
-            >
-                Reset your password
-            </h2>
-
-            <p
-                style="
-                    margin: 0 0 12px;
-                    line-height: 1.6;
-                    color: #5f5148;
-                "
-            >
-                We received a request to reset the password
-                for your admin account.
-            </p>
-
-            <p
-                style="
-                    margin: 0 0 24px;
-                    line-height: 1.6;
-                    color: #5f5148;
-                "
-            >
-                This reset link will expire in
-                <strong>15 minutes</strong>.
-            </p>
-
-            <!-- Reset button -->
-            <div style="margin: 28px 0;">
-                <a
-                    href="${resetUrl}"
-                    style="
-                        display: inline-block;
-                        padding: 12px 20px;
-                        border-radius: 8px;
-                        background-color: #d97706;
-                        color: #ffffff;
-                        text-decoration: none;
-                        font-size: 14px;
-                        font-weight: 600;
-                        line-height: 1;
-                    "
-                >
-                    Reset password
-                </a>
-            </div>
-
-            <!-- Fallback link -->
-            <p
-                style="
-                    margin: 0 0 8px;
-                    font-size: 13px;
-                    font-weight: 600;
-                    color: #5f5148;
-                "
-            >
-                Button not working?
-            </p>
-
-            <p
-                style="
-                    margin: 0;
-                    font-size: 13px;
-                    line-height: 1.6;
-                    color: #8b7c72;
-                "
-            >
-                Copy and paste this link into your browser:
-            </p>
-
-            <p
-                style="
-                    margin: 8px 0 24px;
-                    padding: 10px 12px;
-                    border-radius: 6px;
-                    background-color: #fff7ed;
-                    border: 1px solid #fed7aa;
-                    word-break: break-all;
-                "
-            >
-                <a
-                    href="${resetUrl}"
-                    style="
-                        color: #c2410c;
-                        text-decoration: underline;
-                        font-size: 12px;
-                        line-height: 1.6;
-                    "
-                >
-                    ${resetUrl}
-                </a>
-            </p>
-
-            <p
-                style="
-                    margin: 0;
-                    line-height: 1.6;
-                    font-size: 13px;
-                    color: #8b7c72;
-                "
-            >
-                If you did not request a password reset,
-                you can safely ignore this email.
-            </p>
-        </div>
-    `;
-
-    await sendEmail({
-        to: email,
-        subject: 'Reset your admin password',
-        html,
+    await sendPasswordResetEmail({
+        email,
+        resetUrl,
     });
 }
 
@@ -157,8 +67,24 @@ async function sendPasswordResetEmail({
  * Create Password Reset Request
  * ========================================================= */
 
-export async function createPasswordResetRequest(email: string) {
-    const normalizedEmail = email.trim().toLowerCase();
+/**
+ * Creates a password-reset request for an admin account.
+ *
+ * Security:
+ * - Email is normalized before lookup.
+ * - Response is identical whether the account exists or not.
+ * - Raw token is never stored in the database.
+ * - Only the token hash is stored.
+ * - Reset token automatically expires.
+ * - If email sending fails, the reset token is removed.
+ */
+export async function createPasswordResetRequest(
+    email: string,
+): Promise<{
+    message: string;
+}> {
+    const normalizedEmail =
+        email.trim().toLowerCase();
 
     await connectDB();
 
@@ -166,11 +92,13 @@ export async function createPasswordResetRequest(email: string) {
         email: normalizedEmail,
     });
 
-    /*
-     * Keep the response identical whether the email exists
-     * or not. This prevents admin account enumeration.
+    /**
+     * Keep the response identical whether the email
+     * exists or not. This prevents admin account
+     * enumeration.
      */
-    const message = 'If an account exists for this email, a password reset link has been sent.';
+    const message =
+        'If an account exists for this email, a password reset link has been sent.';
 
     if (!admin) {
         return {
@@ -178,35 +106,78 @@ export async function createPasswordResetRequest(email: string) {
         };
     }
 
-    /*
-     * Generate raw token.
-     * Only the hash will be stored in MongoDB.
+    /**
+     * Generate a cryptographically secure token.
+     *
+     * Only the hash is stored in MongoDB.
      */
-    const rawToken = randomBytes(32).toString('hex');
+    const {
+        rawToken,
+        tokenHash,
+    } = generatePasswordResetToken();
 
-    const tokenHash = hashConfirmationToken(rawToken);
+    const expiresAt = new Date(
+        Date.now() +
+            RESET_TOKEN_EXPIRES_IN_MS,
+    );
 
-    const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRES_IN_MS);
+    admin.resetPasswordTokenHash =
+        tokenHash;
 
-    admin.resetPasswordTokenHash = tokenHash;
-    admin.resetPasswordTokenExpiresAt = expiresAt;
+    admin.resetPasswordTokenExpiresAt =
+        expiresAt;
 
     await admin.save();
 
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    const baseUrl =
+        process.env.NEXT_PUBLIC_SITE_URL;
 
     if (!baseUrl) {
-        throw new Error('NEXT_PUBLIC_SITE_URL is not configured.');
+        /**
+         * Remove the token if the application URL
+         * is not configured.
+         */
+        admin.resetPasswordTokenHash = null;
+
+        admin.resetPasswordTokenExpiresAt =
+            null;
+
+        await admin.save();
+
+        throw new Error(
+            'NEXT_PUBLIC_SITE_URL is not configured.',
+        );
     }
 
-    const resetUrl = new URL('/admin/reset-password', baseUrl);
+    const resetUrl = new URL(
+        '/admin/reset-password',
+        baseUrl,
+    );
 
-    resetUrl.searchParams.set('token', rawToken);
+    resetUrl.searchParams.set(
+        'token',
+        rawToken,
+    );
 
-    await sendPasswordResetEmail({
-        email: admin.email,
-        resetUrl: resetUrl.toString(),
-    });
+    try {
+        await sendAdminPasswordResetEmail({
+            email: admin.email,
+            resetUrl: resetUrl.toString(),
+        });
+    } catch (error) {
+        /**
+         * Do not leave a valid reset token behind
+         * when the email could not be delivered.
+         */
+        admin.resetPasswordTokenHash = null;
+
+        admin.resetPasswordTokenExpiresAt =
+            null;
+
+        await admin.save();
+
+        throw error;
+    }
 
     return {
         message,
@@ -217,50 +188,96 @@ export async function createPasswordResetRequest(email: string) {
  * Reset Admin Password
  * ========================================================= */
 
-export async function resetAdminPassword({ token, password }: { token: string; password: string }) {
-    const normalizedToken = token.trim();
+/**
+ * Resets an admin password using a valid reset token.
+ *
+ * The token must:
+ * - match the stored hash
+ * - not be expired
+ *
+ * After a successful reset:
+ * - password is replaced
+ * - failed login state is cleared
+ * - reset token is destroyed
+ * - tokenVersion is incremented to invalidate
+ *   existing sessions
+ */
+export async function resetAdminPassword({
+    token,
+    password,
+}: {
+    token: string;
+    password: string;
+}): Promise<{
+    message: string;
+}> {
+    const normalizedToken =
+        token.trim();
 
-    const tokenHash = hashConfirmationToken(normalizedToken);
+    if (!normalizedToken) {
+        throw new Error(
+            'Invalid or expired reset link.',
+        );
+    }
+
+    const tokenHash =
+        hashConfirmationToken(
+            normalizedToken,
+        );
 
     await connectDB();
 
-    const newPasswordHash = await hashPassword(password);
+    const newPasswordHash =
+        await hashPassword(password);
 
-    const updatedAdmin = await Admin.findOneAndUpdate(
-        {
-            resetPasswordTokenHash: tokenHash,
+    const updatedAdmin =
+        await Admin.findOneAndUpdate(
+            {
+                resetPasswordTokenHash:
+                    tokenHash,
 
-            resetPasswordTokenExpiresAt: {
-                $gt: new Date(),
+                resetPasswordTokenExpiresAt: {
+                    $gt: new Date(),
+                },
             },
-        },
-        {
-            $set: {
-                passwordHash: newPasswordHash,
+            {
+                $set: {
+                    passwordHash:
+                        newPasswordHash,
 
-                failedLoginAttempts: 0,
+                    failedLoginAttempts: 0,
 
-                lockUntil: null,
+                    lockUntil: null,
 
-                resetPasswordTokenHash: null,
+                    resetPasswordTokenHash:
+                        null,
 
-                resetPasswordTokenExpiresAt: null,
+                    resetPasswordTokenExpiresAt:
+                        null,
+                },
+
+                /**
+                 * Invalidate all existing sessions
+                 * after a password reset.
+                 */
+                $inc: {
+                    tokenVersion: 1,
+                },
             },
-
-            $inc: {
-                tokenVersion: 1,
+            {
+                new: true,
             },
-        },
-        {
-            new: true,
-        },
-    );
+        );
 
     if (!updatedAdmin) {
-        throw new Error('Invalid or expired reset link.');
+        throw new Error(
+            'Invalid or expired reset link.',
+        );
     }
 
     return {
-        message: 'Password reset successfully. You can now sign in.',
+        message:
+            'Password reset successfully. You can now sign in.',
     };
 }
+

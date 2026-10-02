@@ -1,32 +1,18 @@
 import type { Metadata } from 'next';
 
-import {
-    ClipboardList,
-} from 'lucide-react';
+import { ClipboardList } from 'lucide-react';
 
-import {
-    getAdminOrders,
-} from '@/services/order.service';
+import { getAdminOrders } from '@/services/order.service';
 
-import {
-    OrderTable,
-} from '@/app/components/admin/OrderTable';
+import { OrderTable } from '@/app/components/admin/OrderTable';
 
-import {
-    OrdersToolbar,
-} from '@/app/components/admin/OrdersToolbar';
+import { OrdersToolbar } from '@/app/components/admin/OrdersToolbar';
 
-import {
-    Pagination,
-} from '@/app/components/admin/Pagination';
+import { Pagination } from '@/app/components/admin/Pagination';
 
-import {
-    Card,
-} from '@/app/components/ui/Card';
+import { Card } from '@/app/components/ui/Card';
 
-import {
-    OrdersSummary,
-} from '@/app/components/admin/OrdersSummary';
+import { OrdersSummary } from '@/app/components/admin/OrdersSummary';
 
 export const metadata: Metadata = {
     title: 'Orders',
@@ -45,26 +31,16 @@ export default async function AdminOrdersPage({
 }) {
     const params = await searchParams;
 
-    const result = await getAdminOrders(
-        params,
-    );
+    const result = await getAdminOrders(params);
 
-    const data = result.success
-        ? result.data
-        : undefined;
+    const data = result.success ? result.data : undefined;
 
-    const orders =
-        data?.orders ?? [];
+    const orders = data?.orders ?? [];
 
-    const hasFilters = Boolean(
-        params.search ||
-        params.orderStatus ||
-        params.paymentStatus,
-    );
+    const hasFilters = Boolean(params.search || params.orderStatus || params.paymentStatus);
 
     return (
         <div className="w-full max-w-7xl space-y-5 sm:space-y-6">
-
             {/* =====================================================
                 Header
             ===================================================== */}
@@ -73,10 +49,7 @@ export default async function AdminOrdersPage({
                 <div className="min-w-0">
                     <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-200/70 bg-amber-50 text-amber-700">
-                            <ClipboardList
-                                className="h-5 w-5"
-                                strokeWidth={1.8}
-                            />
+                            <ClipboardList className="h-5 w-5" strokeWidth={1.8} />
                         </div>
 
                         <div className="min-w-0">
@@ -98,21 +71,13 @@ export default async function AdminOrdersPage({
                 Summary
             ===================================================== */}
 
-            {data ? (
-                <OrdersSummary
-                    summary={
-                        data.summary
-                    }
-                />
-            ) : null}
+            {data ? <OrdersSummary summary={data.summary} /> : null}
 
             {/* =====================================================
                 Toolbar
             ===================================================== */}
 
-            <OrdersToolbar
-                basePath="/admin/orders"
-            />
+            <OrdersToolbar basePath="/admin/orders" />
 
             {/* =====================================================
                 Orders Table
@@ -121,24 +86,17 @@ export default async function AdminOrdersPage({
             <Card>
                 {orders.length > 0 ? (
                     <div className="overflow-hidden">
-                        <OrderTable
-                            orders={orders}
-                        />
+                        <OrderTable orders={orders} />
 
                         {data ? (
                             <Pagination
                                 basePath="/admin/orders"
                                 page={data.page}
-                                totalPages={
-                                    data.totalPages
-                                }
+                                totalPages={data.totalPages}
                                 searchParams={{
-                                    search:
-                                        params.search,
-                                    orderStatus:
-                                        params.orderStatus,
-                                    paymentStatus:
-                                        params.paymentStatus,
+                                    search: params.search,
+                                    orderStatus: params.orderStatus,
+                                    paymentStatus: params.paymentStatus,
                                     sort: params.sort,
                                 }}
                             />
@@ -147,10 +105,7 @@ export default async function AdminOrdersPage({
                 ) : (
                     <div className="flex min-h-[280px] flex-col items-center justify-center px-6 py-14 text-center sm:min-h-[320px]">
                         <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-amber-200/70 bg-amber-50 text-amber-700">
-                            <ClipboardList
-                                className="h-5 w-5"
-                                strokeWidth={1.6}
-                            />
+                            <ClipboardList className="h-5 w-5" strokeWidth={1.6} />
                         </div>
 
                         <p className="mt-4 text-sm font-semibold text-slate-700">

@@ -227,19 +227,3 @@ export async function getCheckoutSummaryAction(
         return handleError(error);
     }
 }
-
-/* ------------------------------------------------------------------ */
-/* Place order                                                        */
-/* ------------------------------------------------------------------ */
-
-export async function placeOrderAction(
-    data: unknown,
-) {
-    /*
-     * placeOrder() performs its own server-side
-     * validation, price calculation and stock check.
-     *
-     * Never trust client-side totals.
-     */
-    return placeOrder(data);
-}
