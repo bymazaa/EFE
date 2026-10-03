@@ -22,9 +22,9 @@ import type { PlaceOrderInput } from '@/lib/validation/order.schema';
 
 import type { PaymentMethod } from '@/lib/constants';
 
-/* ------------------------------------------------------------------ */
-/* Types                                                              */
-/* ------------------------------------------------------------------ */
+/* *------------------------------------------------------------------* */
+/* *Types                                                             * */
+/* *------------------------------------------------------------------* */
 
 export interface PayPalPaymentSuccess {
     orderNumber: string;
@@ -59,9 +59,9 @@ interface PayPalPaymentProps {
     onError?: (message: string) => void;
 }
 
-/* ------------------------------------------------------------------ */
-/* Google Pay browser types                                           */
-/* ------------------------------------------------------------------ */
+/* *------------------------------------------------------------------* */
+/* *Google Pay browser types                                          * */
+/* *------------------------------------------------------------------* */
 
 interface GooglePayPaymentMethodData {
     [key: string]: unknown;
@@ -73,6 +73,7 @@ interface GooglePayPaymentData {
 
 interface GooglePayPaymentAuthorizationResult {
     transactionState: 'SUCCESS' | 'ERROR';
+
     error?: {
         intent?: string;
         message?: string;
@@ -97,6 +98,24 @@ interface GooglePayPaymentDataRequest {
     merchantInfo?: Record<string, unknown>;
 
     callbackIntents?: string[];
+}
+
+/**
+ * The exact type returned by the installed PayPal SDK can differ
+ * from the latest documented response shape.
+ *
+ * Therefore these fields are optional here and normalized below.
+ */
+interface PayPalGooglePayConfig {
+    allowedPaymentMethods: readonly unknown[];
+
+    merchantInfo?: Record<string, unknown>;
+
+    apiVersion?: number;
+
+    apiVersionMinor?: number;
+
+    countryCode?: string;
 }
 
 interface GooglePayPaymentsClient {
@@ -131,7 +150,9 @@ interface GooglePayPaymentsApi {
     }) => GooglePayPaymentsClient;
 }
 
-function getGooglePayApi(): GooglePayPaymentsApi | undefined {
+function getGooglePayApi():
+    | GooglePayPaymentsApi
+    | undefined {
     return (
         window as unknown as {
             google?: {
@@ -143,16 +164,18 @@ function getGooglePayApi(): GooglePayPaymentsApi | undefined {
     ).google?.payments?.api;
 }
 
-/* ------------------------------------------------------------------ */
-/* Google Pay script loader                                           */
-/* ------------------------------------------------------------------ */
+/* *------------------------------------------------------------------* */
+/* *Google Pay script loader                                          * */
+/* *------------------------------------------------------------------* */
 
 let googlePayScriptPromise: Promise<void> | null = null;
 
 function loadGooglePayScript(): Promise<void> {
     if (typeof window === 'undefined') {
         return Promise.reject(
-            new Error('Google Pay requires a browser environment.'),
+            new Error(
+                'Google Pay requires a browser environment.',
+            ),
         );
     }
 
@@ -184,15 +207,12 @@ function loadGooglePayScript(): Promise<void> {
                     }
                 };
 
-                if (existingScript.readyState === 'complete') {
-                    checkLoaded();
-                    return;
-                }
-
                 existingScript.addEventListener(
                     'load',
                     checkLoaded,
-                    { once: true },
+                    {
+                        once: true,
+                    },
                 );
 
                 existingScript.addEventListener(
@@ -204,8 +224,18 @@ function loadGooglePayScript(): Promise<void> {
                             ),
                         );
                     },
-                    { once: true },
+                    {
+                        once: true,
+                    },
                 );
+
+                /**
+                 * In case the script was already loaded
+                 * before the listener was attached.
+                 */
+                if (getGooglePayApi()) {
+                    checkLoaded();
+                }
 
                 return;
             }
@@ -217,6 +247,7 @@ function loadGooglePayScript(): Promise<void> {
                 'https://pay.google.com/gp/p/js/pay.js';
 
             script.async = true;
+
             script.dataset.googlePaySdk = 'true';
 
             script.onload = () => {
@@ -249,9 +280,9 @@ function loadGooglePayScript(): Promise<void> {
     return googlePayScriptPromise;
 }
 
-/* ------------------------------------------------------------------ */
-/* Helpers                                                            */
-/* ------------------------------------------------------------------ */
+/* *------------------------------------------------------------------* */
+/* *Helpers                                                           * */
+/* *------------------------------------------------------------------* */
 
 function getPaymentMethodLabel(
     method: PaymentMethod,
@@ -296,9 +327,9 @@ function getApprovalOrderId(
         : null;
 }
 
-/* ------------------------------------------------------------------ */
-/* Main component                                                     */
-/* ------------------------------------------------------------------ */
+/* *------------------------------------------------------------------* */
+/* *Main component                                                    * */
+/* *------------------------------------------------------------------* */
 
 export default function PayPalPayment({
     paymentMethod,
@@ -314,7 +345,8 @@ export default function PayPalPayment({
         process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
 
     const environment =
-        process.env.NEXT_PUBLIC_PAYPAL_ENVIRONMENT ===
+        process.env
+            .NEXT_PUBLIC_PAYPAL_ENVIRONMENT ===
         'production'
             ? 'production'
             : 'sandbox';
@@ -357,9 +389,9 @@ export default function PayPalPayment({
     );
 }
 
-/* ------------------------------------------------------------------ */
-/* Payment method renderer                                            */
-/* ------------------------------------------------------------------ */
+/* *------------------------------------------------------------------* */
+/* *Payment method renderer                                           * */
+/* *------------------------------------------------------------------* */
 
 function PaymentMethodRenderer({
     paymentMethod,
@@ -378,14 +410,16 @@ function PaymentMethodRenderer({
     } = useEligibleMethods({
         payload: {
             amount: amount.toFixed(2),
-            currencyCode: currency.toUpperCase(),
-            paymentFlow: 'ONE_TIME_PAYMENT',
+            currencyCode:
+                currency.toUpperCase(),
+            paymentFlow:
+                'ONE_TIME_PAYMENT',
         },
     });
 
-    /* ----------------------------------------------------------------
-       Create PayPal order
-       ---------------------------------------------------------------- */
+    /* *----------------------------------------------------------------*
+     * Create PayPal order
+     * ----------------------------------------------------------------- */
 
     const handleCreateOrder = useCallback(
         async () => {
@@ -417,64 +451,75 @@ function PaymentMethodRenderer({
                 orderId: result.data.id,
             };
         },
-        [checkoutData, disabled],
-    );
-
-    /* ----------------------------------------------------------------
-       Approved payment → capture → create Mongo order
-       ---------------------------------------------------------------- */
-
-    const handleApprovedPayment = useCallback(
-        async (data: unknown) => {
-            try {
-                const orderId =
-                    getApprovalOrderId(data);
-
-                if (!orderId) {
-                    throw new Error(
-                        'PayPal did not return an order ID.',
-                    );
-                }
-
-                const result =
-                    await capturePayPalOrderAction(
-                        checkoutData,
-                        orderId,
-                    );
-
-                if (!result.success) {
-                    throw new Error(
-                        result.error ||
-                            'Payment could not be completed.',
-                    );
-                }
-
-                if (!result.data) {
-                    throw new Error(
-                        'Payment completed, but order details were not returned.',
-                    );
-                }
-
-                await onSuccess(result.data);
-            } catch (error) {
-                const message =
-                    error instanceof Error
-                        ? error.message
-                        : 'Payment failed. Please try again.';
-
-                onError?.(message);
-            }
-        },
         [
             checkoutData,
-            onError,
-            onSuccess,
+            disabled,
         ],
     );
 
-    /* ----------------------------------------------------------------
-       SDK / eligibility state
-       ---------------------------------------------------------------- */
+    /* *----------------------------------------------------------------*
+     * Approved payment → capture → create Mongo order
+     * ----------------------------------------------------------------- */
+
+    const handleApprovedPayment =
+        useCallback(
+            async (data: unknown) => {
+                try {
+                    const orderId =
+                        getApprovalOrderId(
+                            data,
+                        );
+
+                    if (!orderId) {
+                        throw new Error(
+                            'PayPal did not return an order ID.',
+                        );
+                    }
+
+                    const result =
+                        await capturePayPalOrderAction(
+                            checkoutData,
+                            orderId,
+                        );
+
+                    if (!result.success) {
+                        throw new Error(
+                            result.error ||
+                                'Payment could not be completed.',
+                        );
+                    }
+
+                    if (!result.data) {
+                        throw new Error(
+                            'Payment completed, but order details were not returned.',
+                        );
+                    }
+
+                    await onSuccess(
+                        result.data,
+                    );
+                } catch (error) {
+                    const message =
+                        error instanceof
+                        Error
+                            ? error.message
+                            : 'Payment failed. Please try again.';
+
+                    onError?.(
+                        message,
+                    );
+                }
+            },
+            [
+                checkoutData,
+                onError,
+                onSuccess,
+            ],
+        );
+
+    /* *----------------------------------------------------------------*
+     * SDK / eligibility state
+     * ----------------------------------------------------------------- */
 
     if (isLoading) {
         return <PaymentLoading />;
@@ -492,9 +537,9 @@ function PaymentMethodRenderer({
         );
     }
 
-    /* ----------------------------------------------------------------
-       Eligibility
-       ---------------------------------------------------------------- */
+    /* *----------------------------------------------------------------*
+     * Eligibility
+     * ----------------------------------------------------------------- */
 
     if (
         !eligiblePaymentMethods.isEligible(
@@ -510,9 +555,9 @@ function PaymentMethodRenderer({
         );
     }
 
-    /* ----------------------------------------------------------------
-       Payment buttons
-       ---------------------------------------------------------------- */
+    /* *----------------------------------------------------------------*
+     * Payment buttons
+     * ----------------------------------------------------------------- */
 
     switch (paymentMethod) {
         case 'paypal':
@@ -606,7 +651,9 @@ function PaymentMethodRenderer({
                     }
                     amount={amount}
                     currency={currency}
-                    merchantName={merchantName}
+                    merchantName={
+                        merchantName
+                    }
                     onApprove={
                         handleApprovedPayment
                     }
@@ -621,10 +668,14 @@ function PaymentMethodRenderer({
                     createOrder={
                         handleCreateOrder
                     }
-                    checkoutData={checkoutData}
+                    checkoutData={
+                        checkoutData
+                    }
                     amount={amount}
                     currency={currency}
-                    onSuccess={onSuccess}
+                    onSuccess={
+                        onSuccess
+                    }
                     onError={onError}
                     disabled={disabled}
                 />
@@ -635,9 +686,9 @@ function PaymentMethodRenderer({
     }
 }
 
-/* ------------------------------------------------------------------ */
-/* Apple Pay                                                          */
-/* ------------------------------------------------------------------ */
+/* *------------------------------------------------------------------* */
+/* *Apple Pay                                                         * */
+/* *------------------------------------------------------------------* */
 
 interface ApplePayPaymentButtonProps {
     createOrder: () => Promise<{
@@ -654,7 +705,9 @@ interface ApplePayPaymentButtonProps {
         data: unknown,
     ) => Promise<void>;
 
-    onError?: (message: string) => void;
+    onError?: (
+        message: string,
+    ) => void;
 
     disabled: boolean;
 }
@@ -684,54 +737,79 @@ function ApplePayPaymentButton({
     }
 
     return (
-        <ApplePayOneTimePaymentButton
-            applePayConfig={
-                details.config
+        <div
+            className={
+                disabled
+                    ? 'pointer-events-none w-full opacity-50'
+                    : 'w-full'
             }
-            paymentRequest={{
-                countryCode: 'US',
-                currencyCode:
-                    currency.toUpperCase(),
-                total: {
-                    label: merchantName,
-                    amount:
-                        amount.toFixed(2),
-                    type: 'final',
-                },
-            }}
-            applePaySessionVersion={4}
-            createOrder={createOrder}
-            onApprove={(data) =>
-                onApprove(data)
+            aria-disabled={
+                disabled
             }
-            onCancel={() => {
-                onError?.(
-                    'Apple Pay payment was cancelled.',
-                );
-            }}
-            onError={(error) => {
-                onError?.(
-                    error.message ||
-                        'Apple Pay payment failed.',
-                );
-            }}
-            displayName={merchantName}
-            domainName={
-                typeof window !== 'undefined'
-                    ? window.location.hostname
-                    : ''
-            }
-            buttonstyle="black"
-            type="pay"
-            locale="en"
-            disabled={disabled}
-        />
+        >
+            <ApplePayOneTimePaymentButton
+                applePayConfig={
+                    details.config
+                }
+                paymentRequest={{
+                    countryCode:
+                        'US',
+                    currencyCode:
+                        currency.toUpperCase(),
+                    total: {
+                        label:
+                            merchantName,
+                        amount:
+                            amount.toFixed(
+                                2,
+                            ),
+                        type: 'final',
+                    },
+                }}
+                applePaySessionVersion={
+                    4
+                }
+                createOrder={
+                    createOrder
+                }
+                onApprove={(data) =>
+                    onApprove(
+                        data,
+                    )
+                }
+                onCancel={() => {
+                    onError?.(
+                        'Apple Pay payment was cancelled.',
+                    );
+                }}
+                onError={(error) => {
+                    onError?.(
+                        error.message ||
+                            'Apple Pay payment failed.',
+                    );
+                }}
+                displayName={
+                    merchantName
+                }
+                domainName={
+                    typeof window !==
+                    'undefined'
+                        ? window
+                              .location
+                              .hostname
+                        : ''
+                }
+                buttonstyle="black"
+                type="pay"
+                locale="en"
+            />
+        </div>
     );
 }
 
-/* ------------------------------------------------------------------ */
-/* Google Pay                                                         */
-/* ------------------------------------------------------------------ */
+/* *------------------------------------------------------------------* */
+/* *Google Pay                                                        * */
+/* *------------------------------------------------------------------* */
 
 interface GooglePayPaymentButtonProps {
     createOrder: () => Promise<{
@@ -748,7 +826,9 @@ interface GooglePayPaymentButtonProps {
         result: PayPalPaymentSuccess,
     ) => void | Promise<void>;
 
-    onError?: (message: string) => void;
+    onError?: (
+        message: string,
+    ) => void;
 
     disabled: boolean;
 }
@@ -787,10 +867,10 @@ function GooglePayPaymentButton({
     const [error, setError] =
         useState<string | null>(null);
 
-    /* ----------------------------------------------------------------
-       Keep latest callbacks without forcing
-       Google Pay SDK setup to restart.
-       ---------------------------------------------------------------- */
+    /* *----------------------------------------------------------------*
+     * Keep latest callbacks without forcing
+     * Google Pay SDK setup to restart.
+     * ----------------------------------------------------------------- */
 
     useEffect(() => {
         onSuccessRef.current =
@@ -802,9 +882,9 @@ function GooglePayPaymentButton({
             onError;
     }, [onError]);
 
-    /* ----------------------------------------------------------------
-       Google Pay setup
-       ---------------------------------------------------------------- */
+    /* *----------------------------------------------------------------*
+     * Google Pay setup
+     * ----------------------------------------------------------------- */
 
     useEffect(() => {
         let cancelled = false;
@@ -819,7 +899,9 @@ function GooglePayPaymentButton({
                     return;
                 }
 
-                if (!eligiblePaymentMethods) {
+                if (
+                    !eligiblePaymentMethods
+                ) {
                     return;
                 }
 
@@ -850,27 +932,74 @@ function GooglePayPaymentButton({
                 }
 
                 /* ----------------------------------------------------
-                   Create PayPal Google Pay session
-                   ---------------------------------------------------- */
+                 * Create PayPal Google Pay session
+                 * ---------------------------------------------------- */
 
                 const googlePaySession =
                     sdkInstance.createGooglePayOneTimePaymentSession();
 
                 /* ----------------------------------------------------
-                   Current PayPal v6 API:
-                   getGooglePayConfig()
-                   ---------------------------------------------------- */
+                 * Get Google Pay configuration from PayPal
+                 * ---------------------------------------------------- */
 
-                const googlePayConfig =
-                    await googlePaySession.getGooglePayConfig();
+                const rawGooglePayConfig =
+                    (await googlePaySession.getGooglePayConfig()) as unknown as PayPalGooglePayConfig;
+
+                if (
+                    !rawGooglePayConfig
+                        .allowedPaymentMethods
+                        ?.length
+                ) {
+                    throw new Error(
+                        'Google Pay allowed payment methods are unavailable.',
+                    );
+                }
+
+                if (
+                    !rawGooglePayConfig.merchantInfo
+                ) {
+                    throw new Error(
+                        'Google Pay merchant information is unavailable.',
+                    );
+                }
+
+                /**
+                 * Normalize the config.
+                 *
+                 * Current PayPal documentation returns
+                 * apiVersion, apiVersionMinor, and countryCode.
+                 *
+                 * Some installed SDK/type versions may not expose
+                 * those fields in TypeScript, so we safely fall back
+                 * to Google Pay's required API version values.
+                 */
+                const googlePayConfig = {
+                    allowedPaymentMethods:
+                        rawGooglePayConfig.allowedPaymentMethods,
+
+                    merchantInfo:
+                        rawGooglePayConfig.merchantInfo,
+
+                    apiVersion:
+                        rawGooglePayConfig.apiVersion ??
+                        2,
+
+                    apiVersionMinor:
+                        rawGooglePayConfig.apiVersionMinor ??
+                        0,
+
+                    countryCode:
+                        rawGooglePayConfig.countryCode ??
+                        'US',
+                };
 
                 if (cancelled) {
                     return;
                 }
 
                 /* ----------------------------------------------------
-                   Initialize Google PaymentsClient
-                   ---------------------------------------------------- */
+                 * Initialize Google PaymentsClient
+                 * ---------------------------------------------------- */
 
                 const paymentsClient =
                     new googleApi.PaymentsClient({
@@ -888,9 +1017,8 @@ function GooglePayPaymentButton({
                                 ) => {
                                     try {
                                         /**
-                                         * PayPal's official Google Pay
-                                         * integration creates the order
-                                         * after Google Pay authorization.
+                                         * Create the PayPal order
+                                         * on the server.
                                          */
                                         const created =
                                             await createOrder();
@@ -913,8 +1041,8 @@ function GooglePayPaymentButton({
                                             );
 
                                         /* --------------------------------
-                                           Handle payer authentication
-                                           -------------------------------- */
+                                         * Handle payer authentication
+                                         * -------------------------------- */
 
                                         if (
                                             confirmation.status ===
@@ -936,8 +1064,8 @@ function GooglePayPaymentButton({
                                         }
 
                                         /* --------------------------------
-                                           Capture through server
-                                           -------------------------------- */
+                                         * Capture through server
+                                         * -------------------------------- */
 
                                         const result =
                                             await capturePayPalOrderAction(
@@ -997,8 +1125,8 @@ function GooglePayPaymentButton({
                     });
 
                 /* ----------------------------------------------------
-                   Check Google Pay readiness
-                   ---------------------------------------------------- */
+                 * Check Google Pay readiness
+                 * ---------------------------------------------------- */
 
                 const readiness =
                     await paymentsClient.isReadyToPay(
@@ -1024,88 +1152,96 @@ function GooglePayPaymentButton({
                 }
 
                 /* ----------------------------------------------------
-                   Create Google Pay button
-                   ---------------------------------------------------- */
+                 * Create Google Pay button
+                 * ---------------------------------------------------- */
 
                 const button =
                     paymentsClient.createButton({
-                        onClick: async () => {
-                            if (disabled) {
-                                return;
-                            }
+                        onClick:
+                            async () => {
+                                if (
+                                    disabled
+                                ) {
+                                    return;
+                                }
 
-                            try {
-                                setError(null);
+                                try {
+                                    setError(
+                                        null,
+                                    );
 
-                                const {
-                                    allowedPaymentMethods,
-                                    merchantInfo,
-                                    apiVersion,
-                                    apiVersionMinor,
-                                    countryCode,
-                                } =
-                                    googlePayConfig;
+                                    /**
+                                     * Google Pay's PaymentDataRequest
+                                     * is created at click time so the
+                                     * transaction information is current.
+                                     */
+                                    const paymentDataRequest: GooglePayPaymentDataRequest =
+                                        {
+                                            apiVersion:
+                                                googlePayConfig.apiVersion,
 
-                                const paymentDataRequest: GooglePayPaymentDataRequest =
-                                    {
-                                        apiVersion,
-                                        apiVersionMinor,
+                                            apiVersionMinor:
+                                                googlePayConfig.apiVersionMinor,
 
-                                        allowedPaymentMethods,
+                                            allowedPaymentMethods:
+                                                googlePayConfig.allowedPaymentMethods,
 
-                                        merchantInfo,
+                                            merchantInfo:
+                                                googlePayConfig.merchantInfo,
 
-                                        transactionInfo: {
-                                            totalPriceStatus:
-                                                'FINAL',
+                                            transactionInfo:
+                                                {
+                                                    totalPriceStatus:
+                                                        'FINAL',
 
-                                            totalPrice:
-                                                amount.toFixed(
-                                                    2,
-                                                ),
+                                                    totalPrice:
+                                                        amount.toFixed(
+                                                            2,
+                                                        ),
 
-                                            currencyCode:
-                                                currency.toUpperCase(),
+                                                    currencyCode:
+                                                        currency.toUpperCase(),
 
-                                            countryCode:
-                                                countryCode ||
-                                                'US',
+                                                    countryCode:
+                                                        googlePayConfig.countryCode,
 
-                                            totalPriceLabel:
-                                                'Total',
-                                        },
+                                                    totalPriceLabel:
+                                                        'Total',
+                                                },
 
-                                        callbackIntents: [
-                                            'PAYMENT_AUTHORIZATION',
-                                        ],
-                                    };
+                                            callbackIntents:
+                                                [
+                                                    'PAYMENT_AUTHORIZATION',
+                                                ],
+                                        };
 
-                                await paymentsClient.loadPaymentData(
-                                    paymentDataRequest,
-                                );
-                            } catch (
-                                error
-                            ) {
-                                const message =
-                                    error instanceof
-                                    Error
-                                        ? error.message
-                                        : 'Google Pay payment failed.';
+                                    await paymentsClient.loadPaymentData(
+                                        paymentDataRequest,
+                                    );
+                                } catch (
+                                    error
+                                ) {
+                                    const message =
+                                        error instanceof
+                                        Error
+                                            ? error.message
+                                            : 'Google Pay payment failed.';
 
-                                setError(
-                                    message,
-                                );
+                                    setError(
+                                        message,
+                                    );
 
-                                onErrorRef.current?.(
-                                    message,
-                                );
-                            }
-                        },
+                                    onErrorRef.current?.(
+                                        message,
+                                    );
+                                }
+                            },
 
                         buttonColor:
                             'black',
 
-                        buttonType: 'pay',
+                        buttonType:
+                            'pay',
                     });
 
                 if (cancelled) {
@@ -1113,14 +1249,13 @@ function GooglePayPaymentButton({
                 }
 
                 /**
-                 * IMPORTANT:
-                 *
-                 * The container is rendered even while loading.
-                 * Therefore containerRef.current is available here.
-                 *
-                 * This fixes the previous delayed/two-render button issue.
+                 * The container remains mounted during
+                 * async setup, so the button can be
+                 * inserted immediately.
                  */
-                if (containerRef.current) {
+                if (
+                    containerRef.current
+                ) {
                     containerRef.current.replaceChildren(
                         button,
                     );
@@ -1133,7 +1268,8 @@ function GooglePayPaymentButton({
                 }
 
                 const message =
-                    error instanceof Error
+                    error instanceof
+                    Error
                         ? error.message
                         : 'Google Pay could not be initialized.';
 
@@ -1144,7 +1280,9 @@ function GooglePayPaymentButton({
                 );
             } finally {
                 if (!cancelled) {
-                    setIsLoading(false);
+                    setIsLoading(
+                        false,
+                    );
                 }
             }
         }
@@ -1170,11 +1308,9 @@ function GooglePayPaymentButton({
         sdkInstance,
     ]);
 
-    /* ----------------------------------------------------------------
-       IMPORTANT:
-       Keep the container mounted while loading so the ref exists
-       when the async Google Pay setup finishes.
-       ---------------------------------------------------------------- */
+    /* *----------------------------------------------------------------*
+     * Keep container mounted while loading
+     * ----------------------------------------------------------------- */
 
     return (
         <div className="w-full space-y-3">
@@ -1187,7 +1323,8 @@ function GooglePayPaymentButton({
                 <PaymentLoading />
             ) : null}
 
-            {!isLoading && error ? (
+            {!isLoading &&
+            error ? (
                 <PaymentError
                     message={error}
                 />
@@ -1202,9 +1339,9 @@ function GooglePayPaymentButton({
     );
 }
 
-/* ------------------------------------------------------------------ */
-/* Small UI helpers                                                   */
-/* ------------------------------------------------------------------ */
+/* *------------------------------------------------------------------* */
+/* *Small UI helpers                                                  * */
+/* *------------------------------------------------------------------* */
 
 function PaymentLoading() {
     return (

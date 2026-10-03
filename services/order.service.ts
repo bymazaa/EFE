@@ -826,7 +826,9 @@ export async function placeOrder(
                  */
                 const orderStatusUrl = new URL('/order-status', baseUrl);
 
-                orderStatusUrl.searchParams.set('orderNumber', orderNumber);
+                orderStatusUrl.searchParams.set('orderId', orderNumber);
+                orderStatusUrl.searchParams.set('email', encodeURIComponent(parsed.data.customer.email.trim().toLowerCase())); 
+            
 
                 /**
                  * Convert the shipping address to a

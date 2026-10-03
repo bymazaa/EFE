@@ -1,14 +1,8 @@
-import {
-    CheckoutPaymentIntent,
-    OrdersController,
-} from '@paypal/paypal-server-sdk';
+import { CheckoutPaymentIntent, OrdersController } from '@paypal/paypal-server-sdk';
 
 import { paypalClient } from './client';
 
-const ordersController =
-    new OrdersController(
-        paypalClient,
-    );
+const ordersController = new OrdersController(paypalClient);
 
 /* ------------------------------------------------------------------ */
 /* Types                                                              */
@@ -45,37 +39,29 @@ export interface PayPalCaptureResult {
  * The amount passed here must already be calculated
  * from trusted server-side data.
  */
-export async function createPayPalOrder(
-    input: CreatePayPalOrderInput,
-): Promise<PayPalOrderResult> {
-    const { result } =
-        await ordersController.createOrder({
-            body: {
-                intent:
-                    CheckoutPaymentIntent.Capture,
+export async function createPayPalOrder(input: CreatePayPalOrderInput): Promise<PayPalOrderResult> {
+    const { result } = await ordersController.createOrder({
+        body: {
+            intent: CheckoutPaymentIntent.Capture,
 
-                purchaseUnits: [
-                    {
-                        customId:
-                            input.customId,
+            purchaseUnits: [
+                {
+                    customId: input.customId,
 
-                        amount: {
-                            currencyCode:
-                                input.currencyCode,
+                    amount: {
+                        currencyCode: input.currencyCode,
 
-                            value:
-                                input.amount,
-                        },
+                        value: input.amount,
                     },
-                ],
-            },
-        });
+                },
+            ],
+        },
+    });
 
     if (!result.id) {
-        throw new Error(
-            'PayPal order creation failed.',
-        );
+        throw new Error('PayPal order creation failed.');
     }
+
 
     return {
         id: result.id,
@@ -93,13 +79,12 @@ export async function createPayPalOrder(
  * Used to verify that the PayPal order belongs
  * to the checkout payload we created.
  */
-export async function getPayPalOrder(
-    orderId: string,
-): Promise<unknown> {
-    const { result } =
-        await ordersController.getOrder({
-            id: orderId,
-        });
+export async function getPayPalOrder(orderId: string): Promise<unknown> {
+    const { result } = await ordersController.getOrder({
+        id: orderId,
+    });
+
+
 
     return result;
 }
@@ -111,13 +96,10 @@ export async function getPayPalOrder(
 /**
  * Captures an approved PayPal order.
  */
-export async function capturePayPalOrder(
-    orderId: string,
-): Promise<unknown> {
-    const { result } =
-        await ordersController.captureOrder({
-            id: orderId,
-        });
+export async function capturePayPalOrder(orderId: string): Promise<unknown> {
+    const { result } = await ordersController.captureOrder({
+        id: orderId,
+    });
 
     return result;
 }

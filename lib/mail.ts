@@ -1,4 +1,5 @@
 import { CONTACT_RECEIVER_EMAIL } from './constants';
+
 import { sendEmail } from './email';
 
 /* =========================================================
@@ -14,16 +15,122 @@ function escapeHtml(value: string): string {
         .replace(/'/g, '&#039;');
 }
 
-function formatPaymentMethod(paymentMethod: string): string {
-    return paymentMethod.replace(/_/g, ' ').replace(/\b\w/g, (char) => char.toUpperCase());
+function formatPaymentMethod(
+    paymentMethod: string,
+): string {
+    return paymentMethod
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (char) =>
+            char.toUpperCase(),
+        );
 }
 
-function formatMoney(amount: number, currency: string): string {
+function formatMoney(
+    amount: number,
+    currency: string,
+): string {
     return new Intl.NumberFormat('en-US', {
         style: 'currency',
         currency,
     }).format(amount);
 }
+
+function normalizeEmailSubject(
+    subject: string,
+): string {
+    return subject
+        .replace(/[\r\n]/g, ' ')
+        .trim();
+}
+
+/* =========================================================
+ * Shared Email Styles
+ * ========================================================= */
+
+const EMAIL_CONTAINER_STYLE = `
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    font-family: Arial, Helvetica, sans-serif;
+    color: #2f211a;
+`;
+
+const EMAIL_BRAND_STYLE = `
+    margin: 0 0 28px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #d97706;
+`;
+
+const EMAIL_TITLE_STYLE = `
+    margin: 0 0 16px;
+    font-size: 28px;
+    line-height: 1.25;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #2f211a;
+`;
+
+const EMAIL_TEXT_STYLE = `
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #5f5148;
+`;
+
+const EMAIL_MUTED_STYLE = `
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #8b7c72;
+`;
+
+const EMAIL_SECTION_STYLE = `
+    margin: 28px 0 0;
+    padding-top: 24px;
+    border-top: 1px solid #eadbcf;
+`;
+
+const EMAIL_LABEL_STYLE = `
+    margin: 0 0 7px;
+    font-size: 11px;
+    line-height: 1.4;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8b7c72;
+`;
+
+const EMAIL_VALUE_STYLE = `
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    font-weight: 600;
+    color: #2f211a;
+`;
+
+const EMAIL_BUTTON_STYLE = `
+    display: inline-block;
+    padding: 13px 20px;
+    border-radius: 8px;
+    background-color: #d97706;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 14px;
+    line-height: 1.2;
+    font-weight: 700;
+`;
+
+const EMAIL_FOOTER_STYLE = `
+    margin: 32px 0 0;
+    padding-top: 20px;
+    border-top: 1px solid #eadbcf;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #9a8b80;
+`;
 
 /* =========================================================
  * Admin Created Email
@@ -45,90 +152,43 @@ export async function sendAdminCreatedEmail({
     const safePassword = escapeHtml(password);
 
     const html = `
-        <div
-            style="
-                max-width: 560px;
-                margin: 0 auto;
-                padding: 24px;
-                font-family: Arial, sans-serif;
-                color: #2f211a;
-            "
-        >
-            <h2
-                style="
-                    margin: 0 0 16px;
-                    font-size: 24px;
-                    line-height: 1.3;
-                "
-            >
+        <div style="${EMAIL_CONTAINER_STYLE}">
+            <p style="${EMAIL_BRAND_STYLE}">
+                EFE Apparel
+            </p>
+
+            <h2 style="${EMAIL_TITLE_STYLE}">
                 Your admin account is ready
             </h2>
 
-            <p
-                style="
-                    margin: 0 0 12px;
-                    line-height: 1.6;
-                    color: #5f5148;
-                "
-            >
+            <p style="${EMAIL_TEXT_STYLE}; margin-bottom: 8px;">
                 Hi ${safeName},
             </p>
 
-            <p
-                style="
-                    margin: 0 0 24px;
-                    line-height: 1.6;
-                    color: #5f5148;
-                "
-            >
+            <p style="${EMAIL_TEXT_STYLE}">
                 Your admin account has been created successfully.
-                You can use the credentials below to sign in.
+                You can use the credentials below to sign in to
+                your administrator dashboard.
             </p>
 
-            <div
-                style="
-                    margin: 0 0 24px;
-                    padding: 16px;
-                    border-radius: 8px;
-                    background-color: #fff7ed;
-                    border: 1px solid #fed7aa;
-                "
-            >
-                <p
-                    style="
-                        margin: 0 0 10px;
-                        font-size: 13px;
-                        color: #8b7c72;
-                    "
-                >
+            <div style="${EMAIL_SECTION_STYLE}">
+                <p style="${EMAIL_LABEL_STYLE}">
                     Email
                 </p>
 
-                <p
-                    style="
-                        margin: 0 0 16px;
-                        font-size: 14px;
-                        font-weight: 600;
-                        color: #2f211a;
-                    "
-                >
+                <p style="${EMAIL_VALUE_STYLE}; margin-bottom: 20px;">
                     ${safeEmail}
                 </p>
 
-                <p
-                    style="
-                        margin: 0 0 10px;
-                        font-size: 13px;
-                        color: #8b7c72;
-                    "
-                >
-                    Password
+                <p style="${EMAIL_LABEL_STYLE}">
+                    Temporary Password
                 </p>
 
                 <p
                     style="
                         margin: 0;
                         font-size: 14px;
+                        line-height: 1.6;
                         font-weight: 600;
                         color: #2f211a;
                         word-break: break-all;
@@ -138,16 +198,13 @@ export async function sendAdminCreatedEmail({
                 </p>
             </div>
 
-            <p
-                style="
-                    margin: 0;
-                    line-height: 1.6;
-                    font-size: 13px;
-                    color: #8b7c72;
-                "
-            >
-                Please sign in and change your password as soon
-                as possible.
+            <p style="${EMAIL_SECTION_STYLE}; ${EMAIL_MUTED_STYLE}">
+                For security, sign in and change your password
+                as soon as possible.
+            </p>
+
+            <p style="${EMAIL_FOOTER_STYLE}">
+                This is an automated security email from EFE Apparel.
             </p>
         </div>
     `;
@@ -174,119 +231,72 @@ export async function sendPasswordResetEmail({
     const safeResetUrl = escapeHtml(resetUrl);
 
     const html = `
-        <div
-            style="
-                max-width: 560px;
-                margin: 0 auto;
-                padding: 24px;
-                font-family: Arial, sans-serif;
-                color: #2f211a;
-            "
-        >
-            <h2
-                style="
-                    margin: 0 0 16px;
-                    font-size: 24px;
-                    line-height: 1.3;
-                "
-            >
+        <div style="${EMAIL_CONTAINER_STYLE}">
+            <p style="${EMAIL_BRAND_STYLE}">
+                EFE Apparel
+            </p>
+
+            <h2 style="${EMAIL_TITLE_STYLE}">
                 Reset your password
             </h2>
 
-            <p
-                style="
-                    margin: 0 0 12px;
-                    line-height: 1.6;
-                    color: #5f5148;
-                "
-            >
+            <p style="${EMAIL_TEXT_STYLE}; margin-bottom: 10px;">
                 We received a request to reset the password
                 for your admin account.
             </p>
 
-            <p
-                style="
-                    margin: 0 0 24px;
-                    line-height: 1.6;
-                    color: #5f5148;
-                "
-            >
-                This reset link will expire in
+            <p style="${EMAIL_TEXT_STYLE}">
+                This password reset link will expire in
                 <strong>15 minutes</strong>.
             </p>
 
-            <div style="margin: 28px 0;">
+            <div
+                style="
+                    margin: 28px 0;
+                    text-align: left;
+                "
+            >
                 <a
                     href="${safeResetUrl}"
-                    style="
-                        display: inline-block;
-                        padding: 12px 20px;
-                        border-radius: 8px;
-                        background-color: #d97706;
-                        color: #ffffff;
-                        text-decoration: none;
-                        font-size: 14px;
-                        font-weight: 600;
-                        line-height: 1;
-                    "
+                    style="${EMAIL_BUTTON_STYLE}"
                 >
-                    Reset password
+                    Reset Password
                 </a>
             </div>
 
-            <p
-                style="
-                    margin: 0 0 8px;
-                    font-size: 13px;
-                    font-weight: 600;
-                    color: #5f5148;
-                "
-            >
-                Button not working?
-            </p>
+            <div style="${EMAIL_SECTION_STYLE}">
+                <p
+                    style="
+                        margin: 0 0 8px;
+                        font-size: 12px;
+                        line-height: 1.6;
+                        font-weight: 700;
+                        color: #5f5148;
+                    "
+                >
+                    Having trouble with the button?
+                </p>
 
-            <p
-                style="
-                    margin: 0;
-                    font-size: 13px;
-                    line-height: 1.6;
-                    color: #8b7c72;
-                "
-            >
-                Copy and paste this link into your browser:
-            </p>
+                <p style="${EMAIL_MUTED_STYLE}; margin-bottom: 10px;">
+                    Copy and paste the following URL into
+                    your browser:
+                </p>
 
-            <p
-                style="
-                    margin: 8px 0 24px;
-                    padding: 10px 12px;
-                    border-radius: 6px;
-                    background-color: #fff7ed;
-                    border: 1px solid #fed7aa;
-                    word-break: break-all;
-                "
-            >
                 <a
                     href="${safeResetUrl}"
                     style="
+                        font-size: 12px;
+                        line-height: 1.7;
                         color: #c2410c;
                         text-decoration: underline;
-                        font-size: 12px;
-                        line-height: 1.6;
+                        word-break: break-all;
                     "
                 >
                     ${safeResetUrl}
                 </a>
-            </p>
+            </div>
 
-            <p
-                style="
-                    margin: 0;
-                    line-height: 1.6;
-                    font-size: 13px;
-                    color: #8b7c72;
-                "
-            >
+            <p style="${EMAIL_FOOTER_STYLE}">
                 If you did not request a password reset,
                 you can safely ignore this email.
             </p>
@@ -312,58 +322,40 @@ export async function sendPasswordChangedEmail({
     email: string;
     name?: string;
 }): Promise<void> {
-    const greeting = name?.trim() ? `Hi ${escapeHtml(name.trim())},` : 'Hi,';
+    const greeting = name?.trim()
+        ? `Hi ${escapeHtml(name.trim())},`
+        : 'Hi,';
 
     const html = `
-        <div
-            style="
-                max-width: 560px;
-                margin: 0 auto;
-                padding: 24px;
-                font-family: Arial, sans-serif;
-                color: #2f211a;
-            "
-        >
-            <h2
-                style="
-                    margin: 0 0 16px;
-                    font-size: 24px;
-                    line-height: 1.3;
-                "
-            >
+        <div style="${EMAIL_CONTAINER_STYLE}">
+            <p style="${EMAIL_BRAND_STYLE}">
+                EFE Apparel
+            </p>
+
+            <h2 style="${EMAIL_TITLE_STYLE}">
                 Your password was changed
             </h2>
 
-            <p
-                style="
-                    margin: 0 0 12px;
-                    line-height: 1.6;
-                    color: #5f5148;
-                "
-            >
+            <p style="${EMAIL_TEXT_STYLE}; margin-bottom: 8px;">
                 ${greeting}
             </p>
 
-            <p
-                style="
-                    margin: 0 0 16px;
-                    line-height: 1.6;
-                    color: #5f5148;
-                "
-            >
-                Your password has been changed successfully.
+            <p style="${EMAIL_TEXT_STYLE}">
+                Your admin account password has been changed
+                successfully.
             </p>
 
-            <p
-                style="
-                    margin: 0 0 24px;
-                    line-height: 1.6;
-                    font-size: 13px;
-                    color: #8b7c72;
-                "
-            >
-                If you did not make this change, please contact
-                your administrator immediately.
+            <div style="${EMAIL_SECTION_STYLE}">
+                <p style="${EMAIL_MUTED_STYLE}">
+                    If you did not make this change, contact
+                    your administrator immediately and secure
+                    your account.
+                </p>
+            </div>
+
+            <p style="${EMAIL_FOOTER_STYLE}">
+                This is an automated security notification from
+                EFE Apparel.
             </p>
         </div>
     `;
@@ -389,91 +381,45 @@ export async function sendOrderDeliveredEmail({
     customerName: string;
     orderNumber: string;
 }): Promise<void> {
-    const safeCustomerName = escapeHtml(customerName?.trim() || 'Customer');
+    const safeCustomerName = escapeHtml(
+        customerName?.trim() || 'Customer',
+    );
 
-    const safeOrderNumber = escapeHtml(orderNumber);
+    const safeOrderNumber = escapeHtml(
+        orderNumber,
+    );
 
     const html = `
-        <div
-            style="
-                max-width: 560px;
-                margin: 0 auto;
-                padding: 24px;
-                font-family: Arial, sans-serif;
-                color: #2f211a;
-            "
-        >
-            <h2
-                style="
-                    margin: 0 0 16px;
-                    font-size: 24px;
-                    line-height: 1.3;
-                "
-            >
+        <div style="${EMAIL_CONTAINER_STYLE}">
+            <p style="${EMAIL_BRAND_STYLE}">
+                EFE Apparel
+            </p>
+
+            <h2 style="${EMAIL_TITLE_STYLE}">
                 Your order has been delivered
             </h2>
 
-            <p
-                style="
-                    margin: 0 0 12px;
-                    line-height: 1.6;
-                    color: #5f5148;
-                "
-            >
+            <p style="${EMAIL_TEXT_STYLE}; margin-bottom: 8px;">
                 Hi ${safeCustomerName},
             </p>
 
-            <p
-                style="
-                    margin: 0 0 20px;
-                    line-height: 1.6;
-                    color: #5f5148;
-                "
-            >
+            <p style="${EMAIL_TEXT_STYLE}">
                 Your order has been marked as delivered.
                 We hope you enjoy your new pieces.
             </p>
 
-            <div
-                style="
-                    margin: 0 0 24px;
-                    padding: 14px 16px;
-                    border-radius: 8px;
-                    background-color: #fff7ed;
-                    border: 1px solid #fed7aa;
-                "
-            >
-                <p
-                    style="
-                        margin: 0 0 6px;
-                        font-size: 12px;
-                        color: #8b7c72;
-                    "
-                >
+            <div style="${EMAIL_SECTION_STYLE}">
+                <p style="${EMAIL_LABEL_STYLE}">
                     Order Number
                 </p>
 
-                <p
-                    style="
-                        margin: 0;
-                        font-size: 15px;
-                        font-weight: 600;
-                        color: #2f211a;
-                    "
-                >
+                <p style="${EMAIL_VALUE_STYLE}">
                     ${safeOrderNumber}
                 </p>
             </div>
 
-            <p
-                style="
-                    margin: 0;
-                    font-size: 13px;
-                    line-height: 1.6;
-                    color: #8b7c72;
-                "
-            >
-                Thank you for shopping with us.
+            <p style="${EMAIL_FOOTER_STYLE}">
+                Thank you for shopping with EFE Apparel.
             </p>
         </div>
     `;
@@ -488,11 +434,10 @@ export async function sendOrderDeliveredEmail({
 
 /* =========================================================
  * Payment Successful Email
- * =========================================================
  *
  * Kept available for future use.
- * Your current order flow can use
- * sendOrderPlacedEmail() instead.
+ * Current order flow can use sendOrderPlacedEmail()
+ * instead.
  * ========================================================= */
 
 export async function sendPaymentSuccessEmail({
@@ -514,199 +459,124 @@ export async function sendPaymentSuccessEmail({
     providerOrderId?: string | null;
     providerCaptureId?: string | null;
 }): Promise<void> {
-    const safeCustomerName = escapeHtml(customerName);
+    const safeCustomerName = escapeHtml(
+        customerName?.trim() || 'Customer',
+    );
 
-    const safeOrderNumber = escapeHtml(orderNumber);
+    const safeOrderNumber = escapeHtml(
+        orderNumber,
+    );
 
-    const formattedAmount = formatMoney(amount, currency);
+    const formattedAmount =
+        formatMoney(amount, currency);
 
-    const formattedPaymentMethod = formatPaymentMethod(paymentMethod);
+    const safeFormattedAmount =
+        escapeHtml(formattedAmount);
 
-    const safePaymentMethod = escapeHtml(formattedPaymentMethod);
+    const formattedPaymentMethod =
+        formatPaymentMethod(paymentMethod);
 
-    const safeProviderOrderId = providerOrderId ? escapeHtml(providerOrderId) : '';
+    const safePaymentMethod =
+        escapeHtml(formattedPaymentMethod);
 
-    const safeProviderCaptureId = providerCaptureId ? escapeHtml(providerCaptureId) : '';
+    const safeProviderOrderId =
+        providerOrderId
+            ? escapeHtml(providerOrderId)
+            : '';
+
+    const safeProviderCaptureId =
+        providerCaptureId
+            ? escapeHtml(providerCaptureId)
+            : '';
 
     const html = `
-        <div
-            style="
-                max-width: 560px;
-                margin: 0 auto;
-                padding: 24px;
-                font-family: Arial, sans-serif;
-                color: #2f211a;
-            "
-        >
-            <h2
-                style="
-                    margin: 0 0 16px;
-                    font-size: 24px;
-                    line-height: 1.3;
-                "
-            >
-                Payment successful
+        <div style="${EMAIL_CONTAINER_STYLE}">
+            <p style="${EMAIL_BRAND_STYLE}">
+                EFE Apparel
+            </p>
+
+            <h2 style="${EMAIL_TITLE_STYLE}">
+                Payment received
             </h2>
 
-            <p
-                style="
-                    margin: 0 0 12px;
-                    line-height: 1.6;
-                    color: #5f5148;
-                "
-            >
+            <p style="${EMAIL_TEXT_STYLE}; margin-bottom: 8px;">
                 Hi ${safeCustomerName},
             </p>
 
-            <p
-                style="
-                    margin: 0 0 20px;
-                    line-height: 1.6;
-                    color: #5f5148;
-                "
-            >
+            <p style="${EMAIL_TEXT_STYLE}">
                 Your payment has been received successfully.
-                Your order is now confirmed and ready for processing.
             </p>
 
-            <div
-                style="
-                    margin: 0 0 24px;
-                    padding: 16px;
-                    border-radius: 8px;
-                    background-color: #fff7ed;
-                    border: 1px solid #fed7aa;
-                "
-            >
-                <p
-                    style="
-                        margin: 0 0 8px;
-                        font-size: 12px;
-                        color: #8b7c72;
-                    "
-                >
+            <div style="${EMAIL_SECTION_STYLE}">
+                <p style="${EMAIL_LABEL_STYLE}">
                     Order Number
                 </p>
 
-                <p
-                    style="
-                        margin: 0 0 16px;
-                        font-size: 15px;
-                        font-weight: 600;
-                        color: #2f211a;
-                    "
-                >
+                <p style="${EMAIL_VALUE_STYLE}; margin-bottom: 20px;">
                     ${safeOrderNumber}
                 </p>
 
-                <p
-                    style="
-                        margin: 0 0 8px;
-                        font-size: 12px;
-                        color: #8b7c72;
-                    "
-                >
+                <p style="${EMAIL_LABEL_STYLE}">
                     Amount Paid
                 </p>
 
-                <p
-                    style="
-                        margin: 0 0 16px;
-                        font-size: 15px;
-                        font-weight: 600;
-                        color: #2f211a;
-                    "
-                >
-                    ${escapeHtml(formattedAmount)}
+                <p style="${EMAIL_VALUE_STYLE}; margin-bottom: 20px;">
+                    ${safeFormattedAmount}
                 </p>
 
-                <p
-                    style="
-                        margin: 0 0 8px;
-                        font-size: 12px;
-                        color: #8b7c72;
-                    "
-                >
+                <p style="${EMAIL_LABEL_STYLE}">
                     Payment Method
                 </p>
 
-                <p
-                    style="
-                        margin: 0 0 16px;
-                        font-size: 15px;
-                        font-weight: 600;
-                        color: #2f211a;
-                    "
-                >
+                <p style="${EMAIL_VALUE_STYLE};">
                     ${safePaymentMethod}
                 </p>
+            </div>
 
-                ${
-                    safeProviderOrderId
-                        ? `
-                            <p
-                                style="
-                                    margin: 0 0 8px;
-                                    font-size: 12px;
-                                    color: #8b7c72;
-                                "
-                            >
+            ${
+                safeProviderOrderId
+                    ? `
+                        <div style="${EMAIL_SECTION_STYLE}">
+                            <p style="${EMAIL_LABEL_STYLE}">
                                 Provider Order ID
                             </p>
 
                             <p
                                 style="
-                                    margin: 0 0 16px;
-                                    font-size: 13px;
-                                    font-weight: 600;
-                                    color: #2f211a;
+                                    ${EMAIL_VALUE_STYLE};
                                     word-break: break-all;
                                 "
                             >
                                 ${safeProviderOrderId}
                             </p>
-                        `
-                        : ''
-                }
+                        </div>
+                    `
+                    : ''
+            }
 
-                ${
-                    safeProviderCaptureId
-                        ? `
-                            <p
-                                style="
-                                    margin: 0 0 8px;
-                                    font-size: 12px;
-                                    color: #8b7c72;
-                                "
-                            >
+            ${
+                safeProviderCaptureId
+                    ? `
+                        <div style="${EMAIL_SECTION_STYLE}">
+                            <p style="${EMAIL_LABEL_STYLE}">
                                 Provider Capture ID
                             </p>
 
                             <p
                                 style="
-                                    margin: 0;
-                                    font-size: 13px;
-                                    font-weight: 600;
-                                    color: #2f211a;
+                                    ${EMAIL_VALUE_STYLE};
                                     word-break: break-all;
                                 "
                             >
                                 ${safeProviderCaptureId}
                             </p>
-                        `
-                        : ''
-                }
-            </div>
+                        </div>
+                    `
+                    : ''
+            }
 
-            <p
-                style="
-                    margin: 0;
-                    font-size: 13px;
-                    line-height: 1.6;
-                    color: #8b7c72;
-                "
-            >
-                Thank you for your order. We appreciate your business.
+            <p style="${EMAIL_FOOTER_STYLE}">
+                Thank you for shopping with EFE Apparel.
             </p>
         </div>
     `;
@@ -746,252 +616,156 @@ export async function sendOrderPlacedEmail({
     shippingAddress: string;
     orderStatusUrl: string;
 }): Promise<void> {
-    const safeCustomerName = escapeHtml(customerName);
+    const safeCustomerName = escapeHtml(
+        customerName?.trim() || 'Customer',
+    );
 
-    const safeOrderNumber = escapeHtml(orderNumber);
+    const safeOrderNumber =
+        escapeHtml(orderNumber);
 
-    const safeShippingAddress = escapeHtml(shippingAddress);
+    const safeShippingAddress =
+        escapeHtml(shippingAddress);
 
-    const safeProviderOrderId = escapeHtml(providerOrderId);
+    const safeProviderOrderId =
+        escapeHtml(providerOrderId);
 
-    const safeProviderCaptureId = escapeHtml(providerCaptureId);
+    const safeProviderCaptureId =
+        escapeHtml(providerCaptureId);
 
-    const safeOrderStatusUrl = escapeHtml(orderStatusUrl);
+    const safeOrderStatusUrl =
+        escapeHtml(orderStatusUrl);
 
-    const formattedAmount = formatMoney(totalAmount, currency);
+    const formattedAmount =
+        formatMoney(
+            totalAmount,
+            currency,
+        );
 
-    const formattedPaymentMethod = escapeHtml(formatPaymentMethod(paymentMethod));
+    const safeFormattedAmount =
+        escapeHtml(formattedAmount);
+
+    const formattedPaymentMethod =
+        formatPaymentMethod(paymentMethod);
+
+    const safePaymentMethod =
+        escapeHtml(formattedPaymentMethod);
 
     const html = `
-        <div
-            style="
-                max-width: 560px;
-                margin: 0 auto;
-                padding: 24px;
-                font-family: Arial, sans-serif;
-                color: #2f211a;
-            "
-        >
-            <h2
-                style="
-                    margin: 0 0 16px;
-                    font-size: 24px;
-                    line-height: 1.3;
-                "
-            >
+        <div style="${EMAIL_CONTAINER_STYLE}">
+            <p style="${EMAIL_BRAND_STYLE}">
+                EFE Apparel
+            </p>
+
+            <h2 style="${EMAIL_TITLE_STYLE}">
                 Order confirmed
             </h2>
 
-            <p
-                style="
-                    margin: 0 0 12px;
-                    line-height: 1.6;
-                    color: #5f5148;
-                "
-            >
+            <p style="${EMAIL_TEXT_STYLE}; margin-bottom: 8px;">
                 Hi ${safeCustomerName},
             </p>
 
-            <p
-                style="
-                    margin: 0 0 20px;
-                    line-height: 1.6;
-                    color: #5f5148;
-                "
-            >
+            <p style="${EMAIL_TEXT_STYLE}">
                 Your order has been placed successfully and
                 your payment has been verified.
             </p>
 
-            <!-- Order information -->
-            <div
-                style="
-                    margin-bottom: 20px;
-                    padding: 16px;
-                    border-radius: 8px;
-                    background-color: #fff7ed;
-                    border: 1px solid #fed7aa;
-                "
-            >
-                <p
-                    style="
-                        margin: 0 0 6px;
-                        font-size: 12px;
-                        color: #8b7c72;
-                    "
-                >
+            <div style="${EMAIL_SECTION_STYLE}">
+                <p style="${EMAIL_LABEL_STYLE}">
                     Order Number
                 </p>
 
-                <p
-                    style="
-                        margin: 0;
-                        font-size: 15px;
-                        font-weight: 700;
-                        color: #2f211a;
-                    "
-                >
+                <p style="${EMAIL_VALUE_STYLE}">
                     ${safeOrderNumber}
                 </p>
             </div>
 
-            <!-- Customer information -->
-            <div
-                style="
-                    margin-bottom: 20px;
-                    padding: 16px;
-                    border-radius: 8px;
-                    background-color: #fffaf5;
-                    border: 1px solid #eadbcf;
-                "
-            >
-                <h3
-                    style="
-                        margin: 0 0 12px;
-                        font-size: 15px;
-                        color: #2f211a;
-                    "
-                >
-                    Customer Information
-                </h3>
+            <div style="${EMAIL_SECTION_STYLE}">
+                <p style="${EMAIL_LABEL_STYLE}">
+                    Customer
+                </p>
 
-                <p
-                    style="
-                        margin: 0 0 6px;
-                        font-size: 13px;
-                        color: #5f5148;
-                    "
-                >
-                    <strong>Name:</strong>
+                <p style="${EMAIL_VALUE_STYLE}; margin-bottom: 18px;">
                     ${safeCustomerName}
+                </p>
+
+                <p style="${EMAIL_LABEL_STYLE}">
+                    Shipping Address
                 </p>
 
                 <p
                     style="
                         margin: 0;
-                        font-size: 13px;
-                        line-height: 1.6;
+                        font-size: 14px;
+                        line-height: 1.7;
                         color: #5f5148;
                     "
                 >
-                    <strong>Shipping Address:</strong><br />
                     ${safeShippingAddress}
                 </p>
             </div>
 
-            <!-- Payment information -->
-            <div
-                style="
-                    margin-bottom: 20px;
-                    padding: 16px;
-                    border-radius: 8px;
-                    background-color: #fffaf5;
-                    border: 1px solid #eadbcf;
-                "
-            >
-                <h3
-                    style="
-                        margin: 0 0 12px;
-                        font-size: 15px;
-                        color: #2f211a;
-                    "
-                >
-                    Payment Information
-                </h3>
+            <div style="${EMAIL_SECTION_STYLE}">
+                <p style="${EMAIL_LABEL_STYLE}">
+                    Amount Paid
+                </p>
 
-                <p
-                    style="
-                        margin: 0 0 8px;
-                        font-size: 13px;
-                        color: #5f5148;
-                    "
-                >
-                    <strong>Amount Paid:</strong>
-                    ${escapeHtml(formattedAmount)}
+                <p style="${EMAIL_VALUE_STYLE}; margin-bottom: 18px;">
+                    ${safeFormattedAmount}
+                </p>
+
+                <p style="${EMAIL_LABEL_STYLE}">
+                    Payment Method
+                </p>
+
+                <p style="${EMAIL_VALUE_STYLE}; margin-bottom: 18px;">
+                    ${safePaymentMethod}
+                </p>
+
+                <p style="${EMAIL_LABEL_STYLE}">
+                    Provider Order ID
                 </p>
 
                 <p
                     style="
-                        margin: 0 0 8px;
-                        font-size: 13px;
-                        color: #5f5148;
-                    "
-                >
-                    <strong>Payment Method:</strong>
-                    ${formattedPaymentMethod}
-                </p>
-
-                <p
-                    style="
-                        margin: 0 0 8px;
-                        font-size: 13px;
-                        color: #5f5148;
+                        ${EMAIL_VALUE_STYLE};
+                        margin-bottom: 18px;
                         word-break: break-all;
                     "
                 >
-                    <strong>Provider Order ID:</strong>
                     ${safeProviderOrderId}
                 </p>
 
+                <p style="${EMAIL_LABEL_STYLE}">
+                    Provider Capture ID
+                </p>
+
                 <p
                     style="
-                        margin: 0;
-                        font-size: 13px;
-                        color: #5f5148;
+                        ${EMAIL_VALUE_STYLE};
                         word-break: break-all;
                     "
                 >
-                    <strong>Provider Capture ID:</strong>
                     ${safeProviderCaptureId}
                 </p>
             </div>
 
-            <!-- Order status -->
             <div
                 style="
-                    margin: 24px 0;
-                    text-align: center;
+                    margin: 32px 0 0;
+                    text-align: left;
                 "
             >
                 <a
                     href="${safeOrderStatusUrl}"
-                    style="
-                        display: inline-block;
-                        padding: 12px 20px;
-                        border-radius: 8px;
-                        background-color: #d97706;
-                        color: #ffffff;
-                        text-decoration: none;
-                        font-size: 14px;
-                        font-weight: 600;
-                    "
+                    style="${EMAIL_BUTTON_STYLE}"
                 >
                     Check Your Order Status
                 </a>
             </div>
 
-            <p
-                style="
-                    margin: 0 0 8px;
-                    font-size: 13px;
-                    text-align: center;
-                    color: #8b7c72;
-                "
-            >
-                Track your order anytime from our website.
-            </p>
-
-            <p
-                style="
-                    margin: 0;
-                    font-size: 12px;
-                    line-height: 1.6;
-                    text-align: center;
-                    color: #a08f83;
-                    word-break: break-all;
-                "
-            >
-                ${safeOrderStatusUrl}
+            <p style="${EMAIL_FOOTER_STYLE}">
+                You can use the order status page anytime to
+                check your order progress.
             </p>
         </div>
     `;
@@ -1008,7 +782,6 @@ export async function sendOrderPlacedEmail({
  * Contact Form Email
  * ========================================================= */
 
-
 export async function sendContactMessageEmail({
     name,
     email,
@@ -1024,131 +797,64 @@ export async function sendContactMessageEmail({
     const safeEmail = escapeHtml(email);
     const safeSubject = escapeHtml(subject);
 
-    const safeMessage = escapeHtml(message).replace(/\n/g, '<br />');
+    const safeMessage =
+        escapeHtml(message).replace(
+            /\n/g,
+            '<br />',
+        );
 
-    // Prevent CR/LF characters from entering the email subject.
-    const emailSubject = subject.replace(/[\r\n]/g, ' ').trim();
+    const emailSubject =
+        normalizeEmailSubject(subject);
 
     const html = `
-        <div
-            style="
-                max-width: 560px;
-                margin: 0 auto;
-                padding: 24px;
-                font-family: Arial, sans-serif;
-                color: #2f211a;
-            "
-        >
-            <h2
-                style="
-                    margin: 0 0 16px;
-                    font-size: 24px;
-                    line-height: 1.3;
-                "
-            >
-                New contact form message
-            </h2>
-
-            <p
-                style="
-                    margin: 0 0 20px;
-                    line-height: 1.6;
-                    color: #5f5148;
-                "
-            >
-                Someone submitted a new message through
-                your website contact form.
+        <div style="${EMAIL_CONTAINER_STYLE}">
+            <p style="${EMAIL_BRAND_STYLE}">
+                EFE Apparel
             </p>
 
-            <div
-                style="
-                    margin-bottom: 20px;
-                    padding: 16px;
-                    border-radius: 8px;
-                    background-color: #fff7ed;
-                    border: 1px solid #fed7aa;
-                "
-            >
-                <p
-                    style="
-                        margin: 0 0 8px;
-                        font-size: 12px;
-                        color: #8b7c72;
-                    "
-                >
+            <h2 style="${EMAIL_TITLE_STYLE}">
+                New contact message
+            </h2>
+
+            <p style="${EMAIL_TEXT_STYLE}">
+                Someone submitted a new message through
+                the website contact form.
+            </p>
+
+            <div style="${EMAIL_SECTION_STYLE}">
+                <p style="${EMAIL_LABEL_STYLE}">
                     Name
                 </p>
 
-                <p
-                    style="
-                        margin: 0 0 16px;
-                        font-size: 14px;
-                        font-weight: 600;
-                        color: #2f211a;
-                    "
-                >
+                <p style="${EMAIL_VALUE_STYLE}; margin-bottom: 20px;">
                     ${safeName}
                 </p>
 
-                <p
-                    style="
-                        margin: 0 0 8px;
-                        font-size: 12px;
-                        color: #8b7c72;
-                    "
-                >
+                <p style="${EMAIL_LABEL_STYLE}">
                     Email
                 </p>
 
                 <p
                     style="
-                        margin: 0 0 16px;
-                        font-size: 14px;
-                        font-weight: 600;
-                        color: #2f211a;
+                        ${EMAIL_VALUE_STYLE};
+                        margin-bottom: 20px;
                         word-break: break-word;
                     "
                 >
                     ${safeEmail}
                 </p>
 
-                <p
-                    style="
-                        margin: 0 0 8px;
-                        font-size: 12px;
-                        color: #8b7c72;
-                    "
-                >
+                <p style="${EMAIL_LABEL_STYLE}">
                     Subject
                 </p>
 
-                <p
-                    style="
-                        margin: 0;
-                        font-size: 14px;
-                        font-weight: 600;
-                        color: #2f211a;
-                    "
-                >
+                <p style="${EMAIL_VALUE_STYLE}">
                     ${safeSubject}
                 </p>
             </div>
 
-            <div
-                style="
-                    padding: 16px;
-                    border-radius: 8px;
-                    background-color: #fffaf5;
-                    border: 1px solid #eadbcf;
-                "
-            >
-                <p
-                    style="
-                        margin: 0 0 10px;
-                        font-size: 12px;
-                        color: #8b7c72;
-                    "
-                >
+            <div style="${EMAIL_SECTION_STYLE}">
+                <p style="${EMAIL_LABEL_STYLE}">
                     Message
                 </p>
 
@@ -1156,13 +862,18 @@ export async function sendContactMessageEmail({
                     style="
                         margin: 0;
                         font-size: 14px;
-                        line-height: 1.7;
+                        line-height: 1.8;
                         color: #5f5148;
                     "
                 >
                     ${safeMessage}
                 </p>
             </div>
+
+            <p style="${EMAIL_FOOTER_STYLE}">
+                Reply directly to this email to respond to
+                ${safeEmail}.
+            </p>
         </div>
     `;
 

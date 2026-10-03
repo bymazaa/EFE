@@ -2,42 +2,19 @@
 
 import { createHash } from 'node:crypto';
 
-import {
-    DEFAULT_CURRENCY,
-} from '@/lib/constants';
+import { DEFAULT_CURRENCY } from '@/lib/constants';
 
-import {
-    placeOrderSchema,
-    type PlaceOrderInput,
-} from '@/lib/validation/order.schema';
+import { placeOrderSchema, type PlaceOrderInput } from '@/lib/validation/order.schema';
 
-import {
-    getSettings,
-} from '@/services/settings.service';
+import { getSettings } from '@/services/settings.service';
 
-import {
-    validateCart,
-    placeOrder,
-} from '@/services/order.service';
+import { validateCart, placeOrder } from '@/services/order.service';
 
-import {
-    createPayPalOrder,
-    getPayPalOrder,
-    capturePayPalOrder,
-} from '@/lib/paypal/orders';
+import { createPayPalOrder, getPayPalOrder, capturePayPalOrder } from '@/lib/paypal/orders';
 
-import {
-    fail,
-    handleError,
-    ok,
-    validationFail,
-    type ActionResult,
-} from '@/lib/action-result';
+import { fail, handleError, ok, validationFail, type ActionResult } from '@/lib/action-result';
 
-import {
-    fromCents,
-    toCents,
-} from '@/lib/utils';
+import { fromCents, toCents } from '@/lib/utils';
 
 /* ------------------------------------------------------------------ */
 /* Types                                                              */
@@ -66,119 +43,76 @@ export interface PayPalCompletedOrderResult {
  * During capture we calculate it again from the submitted
  * checkout data and compare it with the PayPal order.
  */
-function createCheckoutFingerprint(
-    data: PlaceOrderInput,
-): string {
-    const payload =
-        JSON.stringify(data);
+function createCheckoutFingerprint(data: PlaceOrderInput): string {
+    const payload = JSON.stringify(data);
 
-    return createHash('sha256')
-        .update(payload)
-        .digest('hex');
+    return createHash('sha256').update(payload).digest('hex');
 }
 
 /**
  * Checks whether a value is a plain object.
  */
-function isRecord(
-    value: unknown,
-): value is Record<string, unknown> {
-    return (
-        typeof value === 'object' &&
-        value !== null
-    );
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
 }
 
 /**
  * Extracts the first purchase unit from
  * a PayPal order response.
  */
-function getFirstPurchaseUnit(
-    value: unknown,
-): Record<string, unknown> | null {
+function getFirstPurchaseUnit(value: unknown): Record<string, unknown> | null {
     if (!isRecord(value)) {
         return null;
     }
 
-    const purchaseUnits =
-        value.purchaseUnits;
+    const purchaseUnits = value.purchaseUnits;
 
-    if (
-        !Array.isArray(
-            purchaseUnits,
-        )
-    ) {
+    if (!Array.isArray(purchaseUnits)) {
         return null;
     }
 
-    const first =
-        purchaseUnits[0];
+    const first = purchaseUnits[0];
 
-    return isRecord(first)
-        ? first
-        : null;
+    return isRecord(first) ? first : null;
 }
 
 /**
  * Returns the PayPal custom ID.
  */
-function getPayPalCustomId(
-    value: unknown,
-): string | null {
-    const purchaseUnit =
-        getFirstPurchaseUnit(
-            value,
-        );
+function getPayPalCustomId(value: unknown): string | null {
+    const purchaseUnit = getFirstPurchaseUnit(value);
 
-    const customId =
-        purchaseUnit?.customId;
+    const customId = purchaseUnit?.customId;
 
-    return typeof customId ===
-        'string'
-        ? customId
-        : null;
+    return typeof customId === 'string' ? customId : null;
 }
 
 /**
  * Extracts the amount from a PayPal purchase unit.
  */
-function getPayPalOrderAmount(
-    value: unknown,
-): {
+function getPayPalOrderAmount(value: unknown): {
     currencyCode: string;
     amount: string;
 } | null {
-    const purchaseUnit =
-        getFirstPurchaseUnit(
-            value,
-        );
+    const purchaseUnit = getFirstPurchaseUnit(value);
 
-    const amount =
-        purchaseUnit?.amount;
+    const amount = purchaseUnit?.amount;
 
     if (!isRecord(amount)) {
         return null;
     }
 
-    const currencyCode =
-        amount.currencyCode;
+    const currencyCode = amount.currencyCode;
 
-    const valueString =
-        amount.value;
+    const valueString = amount.value;
 
-    if (
-        typeof currencyCode !==
-            'string' ||
-        typeof valueString !==
-            'string'
-    ) {
+    if (typeof currencyCode !== 'string' || typeof valueString !== 'string') {
         return null;
     }
 
     return {
         currencyCode,
-        amount:
-            valueString,
+        amount: valueString,
     };
 }
 
@@ -186,9 +120,7 @@ function getPayPalOrderAmount(
  * Extracts the first completed capture
  * from a PayPal capture response.
  */
-function getCompletedCapture(
-    value: unknown,
-): {
+function getCompletedCapture(value: unknown): {
     id: string;
     status: string;
     amount: string;
@@ -198,104 +130,56 @@ function getCompletedCapture(
         return null;
     }
 
-    const purchaseUnits =
-        value.purchaseUnits;
+    const purchaseUnits = value.purchaseUnits;
 
-    if (
-        !Array.isArray(
-            purchaseUnits,
-        )
-    ) {
+    if (!Array.isArray(purchaseUnits)) {
         return null;
     }
 
-    for (
-        const purchaseUnit of
-        purchaseUnits
-    ) {
-        if (
-            !isRecord(
-                purchaseUnit,
-            )
-        ) {
+    for (const purchaseUnit of purchaseUnits) {
+        if (!isRecord(purchaseUnit)) {
             continue;
         }
 
-        const payments =
-            purchaseUnit.payments;
+        const payments = purchaseUnit.payments;
 
-        if (
-            !isRecord(
-                payments,
-            )
-        ) {
+        if (!isRecord(payments)) {
             continue;
         }
 
-        const captures =
-            payments.captures;
+        const captures = payments.captures;
 
-        if (
-            !Array.isArray(
-                captures,
-            )
-        ) {
+        if (!Array.isArray(captures)) {
             continue;
         }
 
-        for (
-            const capture of
-            captures
-        ) {
-            if (
-                !isRecord(
-                    capture,
-                )
-            ) {
+        for (const capture of captures) {
+            if (!isRecord(capture)) {
                 continue;
             }
 
-            const id =
-                capture.id;
+            const id = capture.id;
 
-            const status =
-                capture.status;
+            const status = capture.status;
 
-            const amount =
-                capture.amount;
+            const amount = capture.amount;
 
-            if (
-                typeof id !==
-                    'string' ||
-                typeof status !==
-                    'string' ||
-                !isRecord(
-                    amount,
-                )
-            ) {
+            if (typeof id !== 'string' || typeof status !== 'string' || !isRecord(amount)) {
                 continue;
             }
 
-            const valueString =
-                amount.value;
+            const valueString = amount.value;
 
-            const currencyCode =
-                amount.currencyCode;
+            const currencyCode = amount.currencyCode;
 
-            if (
-                typeof valueString !==
-                    'string' ||
-                typeof currencyCode !==
-                    'string'
-            ) {
+            if (typeof valueString !== 'string' || typeof currencyCode !== 'string') {
                 continue;
             }
 
             return {
                 id,
                 status,
-                amount:
-                    valueString,
+                amount: valueString,
                 currencyCode,
             };
         }
@@ -308,24 +192,14 @@ function getCompletedCapture(
  * Converts a provider amount string into cents
  * for reliable money comparison.
  */
-function amountToCents(
-    value: string,
-): number | null {
-    const numericValue =
-        Number(value);
+function amountToCents(value: string): number | null {
+    const numericValue = Number(value);
 
-    if (
-        !Number.isFinite(
-            numericValue,
-        ) ||
-        numericValue < 0
-    ) {
+    if (!Number.isFinite(numericValue) || numericValue < 0) {
         return null;
     }
 
-    return toCents(
-        numericValue,
-    );
+    return toCents(numericValue);
 }
 
 /* ------------------------------------------------------------------ */
@@ -338,101 +212,62 @@ function amountToCents(
  *
  * Browser-supplied totals are never trusted.
  */
-async function getAuthoritativePaymentTotal(
-    input: PlaceOrderInput,
-): Promise<{
+async function getAuthoritativePaymentTotal(input: PlaceOrderInput): Promise<{
     amount: string;
     currencyCode: string;
 }> {
-    const cartResult =
-        await validateCart(
-            input.items,
-        );
+    const cartResult = await validateCart(input.items);
 
     if (!cartResult.success) {
-        throw new Error(
-            cartResult.error ||
-                'Unable to validate your cart.',
-        );
+        throw new Error(cartResult.error || 'Unable to validate your cart.');
     }
 
-    const cart =
-        cartResult.data;
+    const cart = cartResult.data;
 
     if (!cart) {
-        throw new Error(
-            'Unable to validate your cart.',
-        );
+        throw new Error('Unable to validate your cart.');
     }
 
     /**
      * Every submitted cart line must still exist.
      */
-    if (
-        cart.removedProductIds
-            .length > 0
-    ) {
-        throw new Error(
-            'Some items in your cart are no longer available.',
-        );
+    if (cart.removedProductIds.length > 0) {
+        throw new Error('Some items in your cart are no longer available.');
     }
 
     /**
      * Every submitted line must still be present
      * after server-side validation.
      */
-    if (
-        cart.items.length !==
-        input.items.length
-    ) {
-        throw new Error(
-            'Some items in your cart are no longer available.',
-        );
+    if (cart.items.length !== input.items.length) {
+        throw new Error('Some items in your cart are no longer available.');
     }
 
     /**
      * Every selected product + size must still
      * be purchasable.
      */
-    const unavailableItem =
-        cart.items.find(
-            (item) =>
-                !item.isActive,
-        );
+    const unavailableItem = cart.items.find((item) => !item.isActive);
 
     if (unavailableItem) {
         throw new Error(
-            unavailableItem
-                .availabilityMessage ||
+            unavailableItem.availabilityMessage ||
                 `${unavailableItem.name} is no longer available.`,
         );
     }
 
-    const settings =
-        await getSettings();
+    const settings = await getSettings();
 
-    const subtotalCents =
-        toCents(
-            cart.subtotal,
-        );
+    const subtotalCents = toCents(cart.subtotal);
 
-    const shippingCostCents =
-        toCents(
-            settings.shippingCost,
-        );
+    const shippingCostCents = toCents(settings.shippingCost);
 
-    const totalCents =
-        subtotalCents +
-        shippingCostCents;
+    const totalCents = subtotalCents + shippingCostCents;
 
     return {
-        amount:
-            fromCents(
-                totalCents,
-            ).toFixed(2),
+        amount: fromCents(totalCents).toFixed(2),
 
-        currencyCode:
-            DEFAULT_CURRENCY.toUpperCase(),
+        currencyCode: DEFAULT_CURRENCY.toUpperCase(),
     };
 }
 
@@ -446,51 +281,29 @@ async function getAuthoritativePaymentTotal(
  */
 export async function createPayPalOrderAction(
     data: unknown,
-): Promise<
-    ActionResult<PayPalCreateOrderResult>
-> {
-    const parsed =
-        placeOrderSchema.safeParse(
-            data,
-        );
+): Promise<ActionResult<PayPalCreateOrderResult>> {
+    const parsed = placeOrderSchema.safeParse(data);
 
     if (!parsed.success) {
-        return validationFail(
-            parsed.error,
-        );
+        return validationFail(parsed.error);
     }
 
     try {
-        const {
+        const { amount, currencyCode } = await getAuthoritativePaymentTotal(parsed.data);
+
+        const checkoutFingerprint = createCheckoutFingerprint(parsed.data);
+
+        const order = await createPayPalOrder({
             amount,
+
             currencyCode,
-        } =
-            await getAuthoritativePaymentTotal(
-                parsed.data,
-            );
 
-        const checkoutFingerprint =
-            createCheckoutFingerprint(
-                parsed.data,
-            );
+            customId: checkoutFingerprint,
+        });
 
-        const order =
-            await createPayPalOrder({
-                amount,
-
-                currencyCode,
-
-                customId:
-                    checkoutFingerprint,
-            });
-
-        return ok(
-            undefined,
-            {
-                id:
-                    order.id,
-            },
-        );
+        return ok(undefined, {
+            id: order.id,
+        });
     } catch (error) {
         return handleError(error);
     }
@@ -510,27 +323,17 @@ export async function createPayPalOrderAction(
 export async function capturePayPalOrderAction(
     data: unknown,
     paypalOrderId: string,
-): Promise<
-    ActionResult<PayPalCompletedOrderResult>
-> {
-    const parsed =
-        placeOrderSchema.safeParse(
-            data,
-        );
+): Promise<ActionResult<PayPalCompletedOrderResult>> {
+    const parsed = placeOrderSchema.safeParse(data);
 
     if (!parsed.success) {
-        return validationFail(
-            parsed.error,
-        );
+        return validationFail(parsed.error);
     }
 
-    const normalizedOrderId =
-        paypalOrderId.trim();
+    const normalizedOrderId = paypalOrderId.trim();
 
     if (!normalizedOrderId) {
-        return fail(
-            'Missing PayPal order ID.',
-        );
+        return fail('Missing PayPal order ID.');
     }
 
     try {
@@ -538,233 +341,123 @@ export async function capturePayPalOrderAction(
         /* Recalculate authoritative amount                           */
         /* ---------------------------------------------------------- */
 
-        const {
-            amount:
-                expectedAmount,
-            currencyCode:
-                expectedCurrency,
-        } =
-            await getAuthoritativePaymentTotal(
-                parsed.data,
-            );
+        const { amount: expectedAmount, currencyCode: expectedCurrency } =
+            await getAuthoritativePaymentTotal(parsed.data);
 
-        const expectedAmountCents =
-            amountToCents(
-                expectedAmount,
-            );
+        const expectedAmountCents = amountToCents(expectedAmount);
 
-        if (
-            expectedAmountCents ===
-            null
-        ) {
-            return fail(
-                'Invalid order amount.',
-            );
+        if (expectedAmountCents === null) {
+            return fail('Invalid order amount.');
         }
 
         /* ---------------------------------------------------------- */
         /* Get PayPal order                                            */
         /* ---------------------------------------------------------- */
 
-        const paypalOrder =
-            await getPayPalOrder(
-                normalizedOrderId,
-            );
+        const paypalOrder = await getPayPalOrder(normalizedOrderId);
 
         /* ---------------------------------------------------------- */
         /* Verify checkout fingerprint                                */
         /* ---------------------------------------------------------- */
 
-        const expectedFingerprint =
-            createCheckoutFingerprint(
-                parsed.data,
-            );
+        const expectedFingerprint = createCheckoutFingerprint(parsed.data);
 
-        const paypalCustomId =
-            getPayPalCustomId(
-                paypalOrder,
-            );
+        const paypalCustomId = getPayPalCustomId(paypalOrder);
 
-        if (
-            paypalCustomId !==
-            expectedFingerprint
-        ) {
-            return fail(
-                'PayPal order does not match this checkout.',
-            );
+        if (paypalCustomId !== expectedFingerprint) {
+            return fail('PayPal order does not match this checkout.');
         }
 
         /* ---------------------------------------------------------- */
         /* Verify PayPal order amount                                 */
         /* ---------------------------------------------------------- */
 
-        const paypalAmount =
-            getPayPalOrderAmount(
-                paypalOrder,
-            );
+        const paypalAmount = getPayPalOrderAmount(paypalOrder);
 
         if (!paypalAmount) {
-            return fail(
-                'Unable to verify the PayPal order amount.',
-            );
+            return fail('Unable to verify the PayPal order amount.');
         }
 
-        if (
-            paypalAmount.currencyCode.toUpperCase() !==
-            expectedCurrency.toUpperCase()
-        ) {
-            return fail(
-                'PayPal currency does not match the order.',
-            );
+        if (paypalAmount.currencyCode.toUpperCase() !== expectedCurrency.toUpperCase()) {
+            return fail('PayPal currency does not match the order.');
         }
 
-        const paypalAmountCents =
-            amountToCents(
-                paypalAmount.amount,
-            );
+        const paypalAmountCents = amountToCents(paypalAmount.amount);
 
-        if (
-            paypalAmountCents ===
-            null
-        ) {
-            return fail(
-                'Invalid PayPal order amount.',
-            );
+        if (paypalAmountCents === null) {
+            return fail('Invalid PayPal order amount.');
         }
 
-        if (
-            paypalAmountCents !==
-            expectedAmountCents
-        ) {
-            return fail(
-                'PayPal amount does not match the current order total.',
-            );
+        if (paypalAmountCents !== expectedAmountCents) {
+            return fail('PayPal amount does not match the current order total.');
         }
 
         /* ---------------------------------------------------------- */
         /* Capture PayPal order                                        */
         /* ---------------------------------------------------------- */
 
-        const capture =
-            await capturePayPalOrder(
-                normalizedOrderId,
-            );
+        const capture = await capturePayPalOrder(normalizedOrderId);
 
-        const completedCapture =
-            getCompletedCapture(
-                capture,
-            );
+        const completedCapture = getCompletedCapture(capture);
 
-        if (
-            !completedCapture
-        ) {
-            return fail(
-                'PayPal payment capture could not be verified.',
-            );
+        if (!completedCapture) {
+            return fail('PayPal payment capture could not be verified.');
         }
 
-        if (
-            completedCapture.status !==
-            'COMPLETED'
-        ) {
-            return fail(
-                'PayPal payment was not completed.',
-            );
+        if (completedCapture.status !== 'COMPLETED') {
+            return fail('PayPal payment was not completed.');
         }
 
         /* ---------------------------------------------------------- */
         /* Verify captured amount                                      */
         /* ---------------------------------------------------------- */
 
-        if (
-            completedCapture.currencyCode.toUpperCase() !==
-            expectedCurrency.toUpperCase()
-        ) {
-            return fail(
-                'Captured payment currency does not match the order.',
-            );
+        if (completedCapture.currencyCode.toUpperCase() !== expectedCurrency.toUpperCase()) {
+            return fail('Captured payment currency does not match the order.');
         }
 
-        const captureAmountCents =
-            amountToCents(
-                completedCapture.amount,
-            );
+        const captureAmountCents = amountToCents(completedCapture.amount);
 
-        if (
-            captureAmountCents ===
-            null
-        ) {
-            return fail(
-                'Invalid captured payment amount.',
-            );
+        if (captureAmountCents === null) {
+            return fail('Invalid captured payment amount.');
         }
 
-        if (
-            captureAmountCents !==
-            expectedAmountCents
-        ) {
-            return fail(
-                'Captured payment amount does not match the order total.',
-            );
+        if (captureAmountCents !== expectedAmountCents) {
+            return fail('Captured payment amount does not match the order total.');
         }
 
         /* ---------------------------------------------------------- */
         /* Payment verified                                            */
         /* ---------------------------------------------------------- */
 
-        const orderResult =
-            await placeOrder(
-                parsed.data,
-                {
-                    providerOrderId:
-                        normalizedOrderId,
+        const orderResult = await placeOrder(parsed.data, {
+            providerOrderId: normalizedOrderId,
 
-                    providerCaptureId:
-                        completedCapture.id,
-                },
-            );
+            providerCaptureId: completedCapture.id,
+        });
 
-        if (
-            !orderResult.success
-        ) {
-            return fail(
-                orderResult.error,
-            );
+        if (!orderResult.success) {
+            return fail(orderResult.error);
         }
 
-        if (
-            !orderResult.data
-        ) {
-            return fail(
-                'Unable to place order.',
-            );
+        if (!orderResult.data) {
+            return fail('Unable to place order.');
         }
 
         /* ---------------------------------------------------------- */
         /* Success                                                      */
         /* ---------------------------------------------------------- */
 
-        return ok(
-            orderResult.message,
-            {
-                orderNumber:
-                    orderResult.data
-                        .orderNumber,
+        return ok(orderResult.message, {
+            orderNumber: orderResult.data.orderNumber,
 
-                confirmationToken:
-                    orderResult.data
-                        .confirmationToken,
+            confirmationToken: orderResult.data.confirmationToken,
 
-                providerOrderId:
-                    normalizedOrderId,
+            providerOrderId: normalizedOrderId,
 
-                providerCaptureId:
-                    completedCapture.id,
-            },
-        );
+            providerCaptureId: completedCapture.id,
+        });
     } catch (error) {
-        return handleError(
-            error,
-        );
+        return handleError(error);
     }
 }
