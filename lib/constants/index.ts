@@ -33,7 +33,7 @@ export const RESET_TOKEN_EXPIRES_IN_MS = 15 * 60 * 1000;
 export const apiKey = process.env.RESEND_API_KEY;
 export const mailDomain = process.env.MAIL_FROM;
 
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://efeapparel.vercel.app';
 export const SITE_NAME = 'EFE Store';
 export const LOW_STOCK_THRESHOLD = 9;
 
