@@ -31,7 +31,7 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://efeapparel.
 export const SITE_NAME = 'EFE Store';
 export const LOW_STOCK_THRESHOLD = 9;
 
-export const CONTACT_RECEIVER_EMAIL = process.env.CONTACT_EMAIL;
+export const CONTACT_RECEIVER_EMAIL = process.env.CONTACT_EMAIL ?? '';
 
 // DD{bcc+8 - sb-yrk1d53145997@personal.example.com - for testing purposes of paypl user id
 
@@ -39,3 +39,8 @@ export const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
 
 export const environment =
     process.env.NEXT_PUBLIC_PAYPAL_ENVIRONMENT === 'production' ? 'production' : 'sandbox';
+
+
+
+
+
