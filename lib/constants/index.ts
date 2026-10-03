@@ -38,3 +38,5 @@ export const SITE_NAME = 'EFE Store';
 export const LOW_STOCK_THRESHOLD = 9;
 
 export const CONTACT_RECEIVER_EMAIL = process.env.CONTACT_EMAIL ;
+
+// DD{bcc+8 - sb-yrk1d53145997@personal.example.com - for testing purposes of paypl user id
