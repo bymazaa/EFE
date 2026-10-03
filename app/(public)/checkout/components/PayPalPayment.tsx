@@ -20,7 +20,7 @@ import {
 
 import type { PlaceOrderInput } from '@/lib/validation/order.schema';
 
-import type { PaymentMethod } from '@/lib/constants';
+import { clientId, environment, type PaymentMethod } from '@/lib/constants';
 
 /* *------------------------------------------------------------------* */
 /* *Types                                                             * */
@@ -52,9 +52,7 @@ interface PayPalPaymentProps {
 
     disabled?: boolean;
 
-    onSuccess: (
-        result: PayPalPaymentSuccess,
-    ) => void | Promise<void>;
+    onSuccess: (result: PayPalPaymentSuccess) => void | Promise<void>;
 
     onError?: (message: string) => void;
 }
@@ -133,9 +131,7 @@ interface GooglePayPaymentsClient {
         buttonType?: string;
     }): HTMLElement;
 
-    loadPaymentData(
-        request: GooglePayPaymentDataRequest,
-    ): Promise<GooglePayPaymentData>;
+    loadPaymentData(request: GooglePayPaymentDataRequest): Promise<GooglePayPaymentData>;
 }
 
 interface GooglePayPaymentsApi {
@@ -150,9 +146,7 @@ interface GooglePayPaymentsApi {
     }) => GooglePayPaymentsClient;
 }
 
-function getGooglePayApi():
-    | GooglePayPaymentsApi
-    | undefined {
+function getGooglePayApi(): GooglePayPaymentsApi | undefined {
     return (
         window as unknown as {
             google?: {
@@ -172,11 +166,7 @@ let googlePayScriptPromise: Promise<void> | null = null;
 
 function loadGooglePayScript(): Promise<void> {
     if (typeof window === 'undefined') {
-        return Promise.reject(
-            new Error(
-                'Google Pay requires a browser environment.',
-            ),
-        );
+        return Promise.reject(new Error('Google Pay requires a browser environment.'));
     }
 
     if (getGooglePayApi()) {
@@ -187,92 +177,67 @@ function loadGooglePayScript(): Promise<void> {
         return googlePayScriptPromise;
     }
 
-    googlePayScriptPromise = new Promise<void>(
-        (resolve, reject) => {
-            const existingScript =
-                document.querySelector<HTMLScriptElement>(
-                    'script[data-google-pay-sdk]',
-                );
+    googlePayScriptPromise = new Promise<void>((resolve, reject) => {
+        const existingScript = document.querySelector<HTMLScriptElement>(
+            'script[data-google-pay-sdk]',
+        );
 
-            if (existingScript) {
-                const checkLoaded = () => {
-                    if (getGooglePayApi()) {
-                        resolve();
-                    } else {
-                        reject(
-                            new Error(
-                                'Google Pay SDK loaded but API is unavailable.',
-                            ),
-                        );
-                    }
-                };
-
-                existingScript.addEventListener(
-                    'load',
-                    checkLoaded,
-                    {
-                        once: true,
-                    },
-                );
-
-                existingScript.addEventListener(
-                    'error',
-                    () => {
-                        reject(
-                            new Error(
-                                'Google Pay SDK failed to load.',
-                            ),
-                        );
-                    },
-                    {
-                        once: true,
-                    },
-                );
-
-                /**
-                 * In case the script was already loaded
-                 * before the listener was attached.
-                 */
-                if (getGooglePayApi()) {
-                    checkLoaded();
-                }
-
-                return;
-            }
-
-            const script =
-                document.createElement('script');
-
-            script.src =
-                'https://pay.google.com/gp/p/js/pay.js';
-
-            script.async = true;
-
-            script.dataset.googlePaySdk = 'true';
-
-            script.onload = () => {
+        if (existingScript) {
+            const checkLoaded = () => {
                 if (getGooglePayApi()) {
                     resolve();
                 } else {
-                    reject(
-                        new Error(
-                            'Google Pay SDK loaded but API is unavailable.',
-                        ),
-                    );
+                    reject(new Error('Google Pay SDK loaded but API is unavailable.'));
                 }
             };
 
-            script.onerror = () => {
-                reject(
-                    new Error(
-                        'Google Pay SDK failed to load.',
-                    ),
-                );
-            };
+            existingScript.addEventListener('load', checkLoaded, {
+                once: true,
+            });
 
-            document.head.appendChild(script);
-        },
-    ).catch((error) => {
+            existingScript.addEventListener(
+                'error',
+                () => {
+                    reject(new Error('Google Pay SDK failed to load.'));
+                },
+                {
+                    once: true,
+                },
+            );
+
+            /**
+             * In case the script was already loaded
+             * before the listener was attached.
+             */
+            if (getGooglePayApi()) {
+                checkLoaded();
+            }
+
+            return;
+        }
+
+        const script = document.createElement('script');
+
+        script.src = 'https://pay.google.com/gp/p/js/pay.js';
+
+        script.async = true;
+
+        script.dataset.googlePaySdk = 'true';
+
+        script.onload = () => {
+            if (getGooglePayApi()) {
+                resolve();
+            } else {
+                reject(new Error('Google Pay SDK loaded but API is unavailable.'));
+            }
+        };
+
+        script.onerror = () => {
+            reject(new Error('Google Pay SDK failed to load.'));
+        };
+
+        document.head.appendChild(script);
+    }).catch((error) => {
         googlePayScriptPromise = null;
         throw error;
     });
@@ -284,9 +249,7 @@ function loadGooglePayScript(): Promise<void> {
 /* *Helpers                                                           * */
 /* *------------------------------------------------------------------* */
 
-function getPaymentMethodLabel(
-    method: PaymentMethod,
-): string {
+function getPaymentMethodLabel(method: PaymentMethod): string {
     switch (method) {
         case 'paypal':
             return 'PayPal';
@@ -308,13 +271,8 @@ function getPaymentMethodLabel(
     }
 }
 
-function getApprovalOrderId(
-    data: unknown,
-): string | null {
-    if (
-        typeof data !== 'object' ||
-        data === null
-    ) {
+function getApprovalOrderId(data: unknown): string | null {
+    if (typeof data !== 'object' || data === null) {
         return null;
     }
 
@@ -322,9 +280,7 @@ function getApprovalOrderId(
         orderId?: unknown;
     };
 
-    return typeof value.orderId === 'string'
-        ? value.orderId
-        : null;
+    return typeof value.orderId === 'string' ? value.orderId : null;
 }
 
 /* *------------------------------------------------------------------* */
@@ -336,25 +292,14 @@ export default function PayPalPayment({
     checkoutData,
     amount,
     currency = 'USD',
-    merchantName = 'Your Store',
+    merchantName = 'EFE Store',
     disabled = false,
     onSuccess,
     onError,
 }: PayPalPaymentProps) {
-    const clientId =
-        process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
-
-    const environment =
-        process.env
-            .NEXT_PUBLIC_PAYPAL_ENVIRONMENT ===
-        'production'
-            ? 'production'
-            : 'sandbox';
-
+ 
     if (!clientId) {
-        return (
-            <PaymentError message="PayPal Client ID is not configured." />
-        );
+        return <PaymentError message="PayPal Client ID is not configured." />;
     }
 
     return (
@@ -369,11 +314,7 @@ export default function PayPalPayment({
             ]}
             pageType="checkout"
             locale="en-US"
-            testBuyerCountry={
-                environment === 'sandbox'
-                    ? 'US'
-                    : undefined
-            }
+            testBuyerCountry={environment === 'sandbox' ? 'US' : "US"}
         >
             <PaymentMethodRenderer
                 paymentMethod={paymentMethod}
@@ -398,22 +339,16 @@ function PaymentMethodRenderer({
     checkoutData,
     amount,
     currency = 'USD',
-    merchantName = 'Your Store',
+    merchantName = 'EFE Store',
     disabled = false,
     onSuccess,
     onError,
 }: PayPalPaymentProps) {
-    const {
-        eligiblePaymentMethods,
-        isLoading,
-        error,
-    } = useEligibleMethods({
+    const { eligiblePaymentMethods, isLoading, error } = useEligibleMethods({
         payload: {
             amount: amount.toFixed(2),
-            currencyCode:
-                currency.toUpperCase(),
-            paymentFlow:
-                'ONE_TIME_PAYMENT',
+            currencyCode: currency.toUpperCase(),
+            paymentFlow: 'ONE_TIME_PAYMENT',
         },
     });
 
@@ -421,101 +356,59 @@ function PaymentMethodRenderer({
      * Create PayPal order
      * ----------------------------------------------------------------- */
 
-    const handleCreateOrder = useCallback(
-        async () => {
-            if (disabled) {
-                throw new Error(
-                    'Payment is currently disabled.',
-                );
-            }
+    const handleCreateOrder = useCallback(async () => {
+        if (disabled) {
+            throw new Error('Payment is currently disabled.');
+        }
 
-            const result =
-                await createPayPalOrderAction(
-                    checkoutData,
-                );
+        const result = await createPayPalOrderAction(checkoutData);
 
-            if (!result.success) {
-                throw new Error(
-                    result.error ||
-                        'Unable to create PayPal order.',
-                );
-            }
+        if (!result.success) {
+            throw new Error(result.error || 'Unable to create PayPal order.');
+        }
 
-            if (!result.data?.id) {
-                throw new Error(
-                    'PayPal did not return an order ID.',
-                );
-            }
+        if (!result.data?.id) {
+            throw new Error('PayPal did not return an order ID.');
+        }
 
-            return {
-                orderId: result.data.id,
-            };
-        },
-        [
-            checkoutData,
-            disabled,
-        ],
-    );
+        return {
+            orderId: result.data.id,
+        };
+    }, [checkoutData, disabled]);
 
     /* *----------------------------------------------------------------*
      * Approved payment → capture → create Mongo order
      * ----------------------------------------------------------------- */
 
-    const handleApprovedPayment =
-        useCallback(
-            async (data: unknown) => {
-                try {
-                    const orderId =
-                        getApprovalOrderId(
-                            data,
-                        );
+    const handleApprovedPayment = useCallback(
+        async (data: unknown) => {
+            try {
+                const orderId = getApprovalOrderId(data);
 
-                    if (!orderId) {
-                        throw new Error(
-                            'PayPal did not return an order ID.',
-                        );
-                    }
-
-                    const result =
-                        await capturePayPalOrderAction(
-                            checkoutData,
-                            orderId,
-                        );
-
-                    if (!result.success) {
-                        throw new Error(
-                            result.error ||
-                                'Payment could not be completed.',
-                        );
-                    }
-
-                    if (!result.data) {
-                        throw new Error(
-                            'Payment completed, but order details were not returned.',
-                        );
-                    }
-
-                    await onSuccess(
-                        result.data,
-                    );
-                } catch (error) {
-                    const message =
-                        error instanceof
-                        Error
-                            ? error.message
-                            : 'Payment failed. Please try again.';
-
-                    onError?.(
-                        message,
-                    );
+                if (!orderId) {
+                    throw new Error('PayPal did not return an order ID.');
                 }
-            },
-            [
-                checkoutData,
-                onError,
-                onSuccess,
-            ],
-        );
+
+                const result = await capturePayPalOrderAction(checkoutData, orderId);
+
+                if (!result.success) {
+                    throw new Error(result.error || 'Payment could not be completed.');
+                }
+
+                if (!result.data) {
+                    throw new Error('Payment completed, but order details were not returned.');
+                }
+
+                await onSuccess(result.data);
+            } catch (error) {
+                const message =
+                    error instanceof Error ? error.message : 'Payment failed. Please try again.';
+
+                onError?.(message);
+            }
+        },
+        [checkoutData, onError, onSuccess],
+    );
 
     /* *----------------------------------------------------------------*
      * SDK / eligibility state
@@ -526,26 +419,18 @@ function PaymentMethodRenderer({
     }
 
     if (error) {
-        return (
-            <PaymentError message="Unable to load available payment methods." />
-        );
+        return <PaymentError message="Unable to load available payment methods." />;
     }
 
     if (!eligiblePaymentMethods) {
-        return (
-            <PaymentError message="No payment method is available right now." />
-        );
+        return <PaymentError message="No payment method is available right now." />;
     }
 
     /* *----------------------------------------------------------------*
      * Eligibility
      * ----------------------------------------------------------------- */
 
-    if (
-        !eligiblePaymentMethods.isEligible(
-            paymentMethod,
-        )
-    ) {
+    if (!eligiblePaymentMethods.isEligible(paymentMethod)) {
         return (
             <PaymentError
                 message={`${getPaymentMethodLabel(
@@ -563,26 +448,13 @@ function PaymentMethodRenderer({
         case 'paypal':
             return (
                 <PayPalOneTimePaymentButton
-                    createOrder={
-                        handleCreateOrder
-                    }
-                    onApprove={(
-                        data: OnApproveDataOneTimePayments,
-                    ) =>
-                        handleApprovedPayment(
-                            data,
-                        )
-                    }
+                    createOrder={handleCreateOrder}
+                    onApprove={(data: OnApproveDataOneTimePayments) => handleApprovedPayment(data)}
                     onCancel={() => {
-                        onError?.(
-                            'PayPal payment was cancelled.',
-                        );
+                        onError?.('PayPal payment was cancelled.');
                     }}
                     onError={(error) => {
-                        onError?.(
-                            error.message ||
-                                'PayPal payment failed.',
-                        );
+                        onError?.(error.message || 'PayPal payment failed.');
                     }}
                     presentationMode="auto"
                     disabled={disabled}
@@ -592,24 +464,13 @@ function PaymentMethodRenderer({
         case 'paylater':
             return (
                 <PayLaterOneTimePaymentButton
-                    createOrder={
-                        handleCreateOrder
-                    }
-                    onApprove={(data) =>
-                        handleApprovedPayment(
-                            data,
-                        )
-                    }
+                    createOrder={handleCreateOrder}
+                    onApprove={(data) => handleApprovedPayment(data)}
                     onCancel={() => {
-                        onError?.(
-                            'Pay Later payment was cancelled.',
-                        );
+                        onError?.('Pay Later payment was cancelled.');
                     }}
                     onError={(error) => {
-                        onError?.(
-                            error.message ||
-                                'Pay Later payment failed.',
-                        );
+                        onError?.(error.message || 'Pay Later payment failed.');
                     }}
                     presentationMode="auto"
                     disabled={disabled}
@@ -619,24 +480,13 @@ function PaymentMethodRenderer({
         case 'venmo':
             return (
                 <VenmoOneTimePaymentButton
-                    createOrder={
-                        handleCreateOrder
-                    }
-                    onApprove={(data) =>
-                        handleApprovedPayment(
-                            data,
-                        )
-                    }
+                    createOrder={handleCreateOrder}
+                    onApprove={(data) => handleApprovedPayment(data)}
                     onCancel={() => {
-                        onError?.(
-                            'Venmo payment was cancelled.',
-                        );
+                        onError?.('Venmo payment was cancelled.');
                     }}
                     onError={(error) => {
-                        onError?.(
-                            error.message ||
-                                'Venmo payment failed.',
-                        );
+                        onError?.(error.message || 'Venmo payment failed.');
                     }}
                     presentationMode="auto"
                     disabled={disabled}
@@ -646,17 +496,11 @@ function PaymentMethodRenderer({
         case 'applepay':
             return (
                 <ApplePayPaymentButton
-                    createOrder={
-                        handleCreateOrder
-                    }
+                    createOrder={handleCreateOrder}
                     amount={amount}
                     currency={currency}
-                    merchantName={
-                        merchantName
-                    }
-                    onApprove={
-                        handleApprovedPayment
-                    }
+                    merchantName={merchantName}
+                    onApprove={handleApprovedPayment}
                     onError={onError}
                     disabled={disabled}
                 />
@@ -665,17 +509,11 @@ function PaymentMethodRenderer({
         case 'googlepay':
             return (
                 <GooglePayPaymentButton
-                    createOrder={
-                        handleCreateOrder
-                    }
-                    checkoutData={
-                        checkoutData
-                    }
+                    createOrder={handleCreateOrder}
+                    checkoutData={checkoutData}
                     amount={amount}
                     currency={currency}
-                    onSuccess={
-                        onSuccess
-                    }
+                    onSuccess={onSuccess}
                     onError={onError}
                     disabled={disabled}
                 />
@@ -701,13 +539,9 @@ interface ApplePayPaymentButtonProps {
 
     merchantName: string;
 
-    onApprove: (
-        data: unknown,
-    ) => Promise<void>;
+    onApprove: (data: unknown) => Promise<void>;
 
-    onError?: (
-        message: string,
-    ) => void;
+    onError?: (message: string) => void;
 
     disabled: boolean;
 }
@@ -721,84 +555,41 @@ function ApplePayPaymentButton({
     onError,
     disabled,
 }: ApplePayPaymentButtonProps) {
-    const {
-        eligiblePaymentMethods,
-    } = usePayPal();
+    const { eligiblePaymentMethods } = usePayPal();
 
-    const details =
-        eligiblePaymentMethods?.getDetails(
-            'applepay',
-        );
+    const details = eligiblePaymentMethods?.getDetails('applepay');
 
     if (!details?.config) {
-        return (
-            <PaymentError message="Apple Pay configuration is unavailable." />
-        );
+        return <PaymentError message="Apple Pay configuration is unavailable." />;
     }
 
     return (
         <div
-            className={
-                disabled
-                    ? 'pointer-events-none w-full opacity-50'
-                    : 'w-full'
-            }
-            aria-disabled={
-                disabled
-            }
+            className={disabled ? 'pointer-events-none w-full opacity-50' : 'w-full'}
+            aria-disabled={disabled}
         >
             <ApplePayOneTimePaymentButton
-                applePayConfig={
-                    details.config
-                }
+                applePayConfig={details.config}
                 paymentRequest={{
-                    countryCode:
-                        'US',
-                    currencyCode:
-                        currency.toUpperCase(),
+                    countryCode: 'US',
+                    currencyCode: currency.toUpperCase(),
                     total: {
-                        label:
-                            merchantName,
-                        amount:
-                            amount.toFixed(
-                                2,
-                            ),
+                        label: merchantName,
+                        amount: amount.toFixed(2),
                         type: 'final',
                     },
                 }}
-                applePaySessionVersion={
-                    4
-                }
-                createOrder={
-                    createOrder
-                }
-                onApprove={(data) =>
-                    onApprove(
-                        data,
-                    )
-                }
+                applePaySessionVersion={4}
+                createOrder={createOrder}
+                onApprove={(data) => onApprove(data)}
                 onCancel={() => {
-                    onError?.(
-                        'Apple Pay payment was cancelled.',
-                    );
+                    onError?.('Apple Pay payment was cancelled.');
                 }}
                 onError={(error) => {
-                    onError?.(
-                        error.message ||
-                            'Apple Pay payment failed.',
-                    );
+                    onError?.(error.message || 'Apple Pay payment failed.');
                 }}
-                displayName={
-                    merchantName
-                }
-                domainName={
-                    typeof window !==
-                    'undefined'
-                        ? window
-                              .location
-                              .hostname
-                        : ''
-                }
+                displayName={merchantName}
+                domainName={typeof window !== 'undefined' ? window.location.hostname : ''}
                 buttonstyle="black"
                 type="pay"
                 locale="en"
@@ -822,13 +613,9 @@ interface GooglePayPaymentButtonProps {
 
     currency: string;
 
-    onSuccess: (
-        result: PayPalPaymentSuccess,
-    ) => void | Promise<void>;
+    onSuccess: (result: PayPalPaymentSuccess) => void | Promise<void>;
 
-    onError?: (
-        message: string,
-    ) => void;
+    onError?: (message: string) => void;
 
     disabled: boolean;
 }
@@ -842,30 +629,19 @@ function GooglePayPaymentButton({
     onError,
     disabled,
 }: GooglePayPaymentButtonProps) {
-    const {
-        sdkInstance,
-        eligiblePaymentMethods,
-    } = usePayPal();
+    const { sdkInstance, eligiblePaymentMethods } = usePayPal();
 
-    const containerRef =
-        useRef<HTMLDivElement | null>(
-            null,
-        );
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
-    const onSuccessRef =
-        useRef(onSuccess);
+    const onSuccessRef = useRef(onSuccess);
 
-    const onErrorRef =
-        useRef(onError);
+    const onErrorRef = useRef(onError);
 
-    const [isLoading, setIsLoading] =
-        useState(true);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const [isReady, setIsReady] =
-        useState(false);
+    const [isReady, setIsReady] = useState(false);
 
-    const [error, setError] =
-        useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     /* *----------------------------------------------------------------*
      * Keep latest callbacks without forcing
@@ -873,13 +649,11 @@ function GooglePayPaymentButton({
      * ----------------------------------------------------------------- */
 
     useEffect(() => {
-        onSuccessRef.current =
-            onSuccess;
+        onSuccessRef.current = onSuccess;
     }, [onSuccess]);
 
     useEffect(() => {
-        onErrorRef.current =
-            onError;
+        onErrorRef.current = onError;
     }, [onError]);
 
     /* *----------------------------------------------------------------*
@@ -899,21 +673,14 @@ function GooglePayPaymentButton({
                     return;
                 }
 
-                if (
-                    !eligiblePaymentMethods
-                ) {
+                if (!eligiblePaymentMethods) {
                     return;
                 }
 
-                const details =
-                    eligiblePaymentMethods.getDetails(
-                        'googlepay',
-                    );
+                const details = eligiblePaymentMethods.getDetails('googlepay');
 
                 if (!details?.config) {
-                    throw new Error(
-                        'Google Pay configuration is unavailable.',
-                    );
+                    throw new Error('Google Pay configuration is unavailable.');
                 }
 
                 await loadGooglePayScript();
@@ -922,21 +689,17 @@ function GooglePayPaymentButton({
                     return;
                 }
 
-                const googleApi =
-                    getGooglePayApi();
+                const googleApi = getGooglePayApi();
 
                 if (!googleApi) {
-                    throw new Error(
-                        'Google Pay SDK is unavailable.',
-                    );
+                    throw new Error('Google Pay SDK is unavailable.');
                 }
 
                 /* ----------------------------------------------------
                  * Create PayPal Google Pay session
                  * ---------------------------------------------------- */
 
-                const googlePaySession =
-                    sdkInstance.createGooglePayOneTimePaymentSession();
+                const googlePaySession = sdkInstance.createGooglePayOneTimePaymentSession();
 
                 /* ----------------------------------------------------
                  * Get Google Pay configuration from PayPal
@@ -945,22 +708,12 @@ function GooglePayPaymentButton({
                 const rawGooglePayConfig =
                     (await googlePaySession.getGooglePayConfig()) as unknown as PayPalGooglePayConfig;
 
-                if (
-                    !rawGooglePayConfig
-                        .allowedPaymentMethods
-                        ?.length
-                ) {
-                    throw new Error(
-                        'Google Pay allowed payment methods are unavailable.',
-                    );
+                if (!rawGooglePayConfig.allowedPaymentMethods?.length) {
+                    throw new Error('Google Pay allowed payment methods are unavailable.');
                 }
 
-                if (
-                    !rawGooglePayConfig.merchantInfo
-                ) {
-                    throw new Error(
-                        'Google Pay merchant information is unavailable.',
-                    );
+                if (!rawGooglePayConfig.merchantInfo) {
+                    throw new Error('Google Pay merchant information is unavailable.');
                 }
 
                 /**
@@ -974,23 +727,15 @@ function GooglePayPaymentButton({
                  * to Google Pay's required API version values.
                  */
                 const googlePayConfig = {
-                    allowedPaymentMethods:
-                        rawGooglePayConfig.allowedPaymentMethods,
+                    allowedPaymentMethods: rawGooglePayConfig.allowedPaymentMethods,
 
-                    merchantInfo:
-                        rawGooglePayConfig.merchantInfo,
+                    merchantInfo: rawGooglePayConfig.merchantInfo,
 
-                    apiVersion:
-                        rawGooglePayConfig.apiVersion ??
-                        2,
+                    apiVersion: rawGooglePayConfig.apiVersion ?? 2,
 
-                    apiVersionMinor:
-                        rawGooglePayConfig.apiVersionMinor ??
-                        0,
+                    apiVersionMinor: rawGooglePayConfig.apiVersionMinor ?? 0,
 
-                    countryCode:
-                        rawGooglePayConfig.countryCode ??
-                        'US',
+                    countryCode: rawGooglePayConfig.countryCode ?? 'US',
                 };
 
                 if (cancelled) {
@@ -1001,146 +746,104 @@ function GooglePayPaymentButton({
                  * Initialize Google PaymentsClient
                  * ---------------------------------------------------- */
 
-                const paymentsClient =
-                    new googleApi.PaymentsClient({
-                        environment:
-                            process.env
-                                .NEXT_PUBLIC_PAYPAL_ENVIRONMENT ===
-                            'production'
-                                ? 'PRODUCTION'
-                                : 'TEST',
+                const paymentsClient = new googleApi.PaymentsClient({
+                    environment:
+                        process.env.NEXT_PUBLIC_PAYPAL_ENVIRONMENT === 'production'
+                            ? 'PRODUCTION'
+                            : 'TEST',
 
-                        paymentDataCallbacks: {
-                            onPaymentAuthorized:
-                                async (
-                                    paymentData,
-                                ) => {
-                                    try {
-                                        /**
-                                         * Create the PayPal order
-                                         * on the server.
-                                         */
-                                        const created =
-                                            await createOrder();
+                    paymentDataCallbacks: {
+                        onPaymentAuthorized: async (paymentData) => {
+                            try {
+                                /**
+                                 * Create the PayPal order
+                                 * on the server.
+                                 */
+                                const created = await createOrder();
 
-                                        /**
-                                         * Confirm Google Pay payment
-                                         * data with the PayPal order.
-                                         */
-                                        const confirmation =
-                                            await googlePaySession.confirmOrder(
-                                                {
-                                                    orderId:
-                                                        created.orderId,
+                                /**
+                                 * Confirm Google Pay payment
+                                 * data with the PayPal order.
+                                 */
+                                const confirmation = await googlePaySession.confirmOrder({
+                                    orderId: created.orderId,
 
-                                                    paymentMethodData:
-                                                        paymentData.paymentMethodData as unknown as Parameters<
-                                                            typeof googlePaySession.confirmOrder
-                                                        >[0]['paymentMethodData'],
-                                                },
-                                            );
+                                    paymentMethodData:
+                                        paymentData.paymentMethodData as unknown as Parameters<
+                                            typeof googlePaySession.confirmOrder
+                                        >[0]['paymentMethodData'],
+                                });
 
-                                        /* --------------------------------
-                                         * Handle payer authentication
-                                         * -------------------------------- */
+                                /* --------------------------------
+                                 * Handle payer authentication
+                                 * -------------------------------- */
 
-                                        if (
-                                            confirmation.status ===
-                                            'PAYER_ACTION_REQUIRED'
-                                        ) {
-                                            await googlePaySession.initiatePayerAction(
-                                                {
-                                                    orderId:
-                                                        created.orderId,
-                                                },
-                                            );
-                                        } else if (
-                                            confirmation.status !==
-                                            'APPROVED'
-                                        ) {
-                                            throw new Error(
-                                                'Google Pay payment could not be approved.',
-                                            );
-                                        }
+                                if (confirmation.status === 'PAYER_ACTION_REQUIRED') {
+                                    await googlePaySession.initiatePayerAction({
+                                        orderId: created.orderId,
+                                    });
+                                } else if (confirmation.status !== 'APPROVED') {
+                                    throw new Error('Google Pay payment could not be approved.');
+                                }
 
-                                        /* --------------------------------
-                                         * Capture through server
-                                         * -------------------------------- */
+                                /* --------------------------------
+                                 * Capture through server
+                                 * -------------------------------- */
 
-                                        const result =
-                                            await capturePayPalOrderAction(
-                                                checkoutData,
-                                                created.orderId,
-                                            );
+                                const result = await capturePayPalOrderAction(
+                                    checkoutData,
+                                    created.orderId,
+                                );
 
-                                        if (
-                                            !result.success
-                                        ) {
-                                            throw new Error(
-                                                result.error ||
-                                                    'Google Pay payment could not be completed.',
-                                            );
-                                        }
+                                if (!result.success) {
+                                    throw new Error(
+                                        result.error ||
+                                            'Google Pay payment could not be completed.',
+                                    );
+                                }
 
-                                        if (
-                                            !result.data
-                                        ) {
-                                            throw new Error(
-                                                'Payment completed, but order details were not returned.',
-                                            );
-                                        }
+                                if (!result.data) {
+                                    throw new Error(
+                                        'Payment completed, but order details were not returned.',
+                                    );
+                                }
 
-                                        await onSuccessRef.current?.(
-                                            result.data,
-                                        );
+                                await onSuccessRef.current?.(result.data);
 
-                                        return {
-                                            transactionState:
-                                                'SUCCESS',
-                                        };
-                                    } catch (
-                                        error
-                                    ) {
-                                        const message =
-                                            error instanceof
-                                            Error
-                                                ? error.message
-                                                : 'Google Pay payment failed.';
+                                return {
+                                    transactionState: 'SUCCESS',
+                                };
+                            } catch (error) {
+                                const message =
+                                    error instanceof Error
+                                        ? error.message
+                                        : 'Google Pay payment failed.';
 
-                                        onErrorRef.current?.(
-                                            message,
-                                        );
+                                onErrorRef.current?.(message);
 
-                                        return {
-                                            transactionState:
-                                                'ERROR',
+                                return {
+                                    transactionState: 'ERROR',
 
-                                            error: {
-                                                message,
-                                            },
-                                        };
-                                    }
-                                },
+                                    error: {
+                                        message,
+                                    },
+                                };
+                            }
                         },
-                    });
+                    },
+                });
 
                 /* ----------------------------------------------------
                  * Check Google Pay readiness
                  * ---------------------------------------------------- */
 
-                const readiness =
-                    await paymentsClient.isReadyToPay(
-                        {
-                            allowedPaymentMethods:
-                                googlePayConfig.allowedPaymentMethods,
+                const readiness = await paymentsClient.isReadyToPay({
+                    allowedPaymentMethods: googlePayConfig.allowedPaymentMethods,
 
-                            apiVersion:
-                                googlePayConfig.apiVersion,
+                    apiVersion: googlePayConfig.apiVersion,
 
-                            apiVersionMinor:
-                                googlePayConfig.apiVersionMinor,
-                        },
-                    );
+                    apiVersionMinor: googlePayConfig.apiVersionMinor,
+                });
 
                 if (cancelled) {
                     return;
@@ -1155,94 +858,61 @@ function GooglePayPaymentButton({
                  * Create Google Pay button
                  * ---------------------------------------------------- */
 
-                const button =
-                    paymentsClient.createButton({
-                        onClick:
-                            async () => {
-                                if (
-                                    disabled
-                                ) {
-                                    return;
-                                }
+                const button = paymentsClient.createButton({
+                    onClick: async () => {
+                        if (disabled) {
+                            return;
+                        }
 
-                                try {
-                                    setError(
-                                        null,
-                                    );
+                        try {
+                            setError(null);
 
-                                    /**
-                                     * Google Pay's PaymentDataRequest
-                                     * is created at click time so the
-                                     * transaction information is current.
-                                     */
-                                    const paymentDataRequest: GooglePayPaymentDataRequest =
-                                        {
-                                            apiVersion:
-                                                googlePayConfig.apiVersion,
+                            /**
+                             * Google Pay's PaymentDataRequest
+                             * is created at click time so the
+                             * transaction information is current.
+                             */
+                            const paymentDataRequest: GooglePayPaymentDataRequest = {
+                                apiVersion: googlePayConfig.apiVersion,
 
-                                            apiVersionMinor:
-                                                googlePayConfig.apiVersionMinor,
+                                apiVersionMinor: googlePayConfig.apiVersionMinor,
 
-                                            allowedPaymentMethods:
-                                                googlePayConfig.allowedPaymentMethods,
+                                allowedPaymentMethods: googlePayConfig.allowedPaymentMethods,
 
-                                            merchantInfo:
-                                                googlePayConfig.merchantInfo,
+                                merchantInfo: googlePayConfig.merchantInfo,
 
-                                            transactionInfo:
-                                                {
-                                                    totalPriceStatus:
-                                                        'FINAL',
+                                transactionInfo: {
+                                    totalPriceStatus: 'FINAL',
 
-                                                    totalPrice:
-                                                        amount.toFixed(
-                                                            2,
-                                                        ),
+                                    totalPrice: amount.toFixed(2),
 
-                                                    currencyCode:
-                                                        currency.toUpperCase(),
+                                    currencyCode: currency.toUpperCase(),
 
-                                                    countryCode:
-                                                        googlePayConfig.countryCode,
+                                    countryCode: googlePayConfig.countryCode,
 
-                                                    totalPriceLabel:
-                                                        'Total',
-                                                },
+                                    totalPriceLabel: 'Total',
+                                },
 
-                                            callbackIntents:
-                                                [
-                                                    'PAYMENT_AUTHORIZATION',
-                                                ],
-                                        };
+                                callbackIntents: ['PAYMENT_AUTHORIZATION'],
+                            };
 
-                                    await paymentsClient.loadPaymentData(
-                                        paymentDataRequest,
-                                    );
-                                } catch (
-                                    error
-                                ) {
-                                    const message =
-                                        error instanceof
-                                        Error
-                                            ? error.message
-                                            : 'Google Pay payment failed.';
+                            await paymentsClient.loadPaymentData(paymentDataRequest);
+                        } catch (error) {
+                            const message =
+                                error instanceof Error
+                                    ? error.message
+                                    : 'Google Pay payment failed.';
 
-                                    setError(
-                                        message,
-                                    );
+                            setError(message);
 
-                                    onErrorRef.current?.(
-                                        message,
-                                    );
-                                }
-                            },
+                            onErrorRef.current?.(message);
+                        }
+                    },
 
-                        buttonColor:
-                            'black',
+                    buttonColor: 'black',
 
-                        buttonType:
-                            'pay',
-                    });
+                    buttonType: 'pay',
+                });
 
                 if (cancelled) {
                     return;
@@ -1253,12 +923,8 @@ function GooglePayPaymentButton({
                  * async setup, so the button can be
                  * inserted immediately.
                  */
-                if (
-                    containerRef.current
-                ) {
-                    containerRef.current.replaceChildren(
-                        button,
-                    );
+                if (containerRef.current) {
+                    containerRef.current.replaceChildren(button);
                 }
 
                 setIsReady(true);
@@ -1268,21 +934,14 @@ function GooglePayPaymentButton({
                 }
 
                 const message =
-                    error instanceof
-                    Error
-                        ? error.message
-                        : 'Google Pay could not be initialized.';
+                    error instanceof Error ? error.message : 'Google Pay could not be initialized.';
 
                 setError(message);
 
-                onErrorRef.current?.(
-                    message,
-                );
+                onErrorRef.current?.(message);
             } finally {
                 if (!cancelled) {
-                    setIsLoading(
-                        false,
-                    );
+                    setIsLoading(false);
                 }
             }
         }
@@ -1292,9 +951,7 @@ function GooglePayPaymentButton({
         return () => {
             cancelled = true;
 
-            if (
-                containerRef.current
-            ) {
+            if (containerRef.current) {
                 containerRef.current.replaceChildren();
             }
         };
@@ -1314,25 +971,13 @@ function GooglePayPaymentButton({
 
     return (
         <div className="w-full space-y-3">
-            <div
-                ref={containerRef}
-                className="min-h-12 w-full"
-            />
+            <div ref={containerRef} className="min-h-12 w-full" />
 
-            {isLoading ? (
-                <PaymentLoading />
-            ) : null}
+            {isLoading ? <PaymentLoading /> : null}
 
-            {!isLoading &&
-            error ? (
-                <PaymentError
-                    message={error}
-                />
-            ) : null}
+            {!isLoading && error ? <PaymentError message={error} /> : null}
 
-            {!isLoading &&
-            !error &&
-            !isReady ? (
+            {!isLoading && !error && !isReady ? (
                 <PaymentError message="Google Pay is not available on this device or browser." />
             ) : null}
         </div>
@@ -1351,11 +996,7 @@ function PaymentLoading() {
     );
 }
 
-function PaymentError({
-    message,
-}: {
-    message: string;
-}) {
+function PaymentError({ message }: { message: string }) {
     return (
         <div
             role="alert"

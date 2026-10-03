@@ -6,13 +6,7 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number];
 export const PAYMENT_STATUSES = ['pending', 'paid', 'failed', 'refunded'] as const;
 export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
 
-export const PAYMENT_METHODS = [
-    'paypal',
-    'paylater',
-    'venmo',
-    'applepay',
-    'googlepay',
-] as const;
+export const PAYMENT_METHODS = ['paypal', 'paylater', 'venmo', 'applepay', 'googlepay'] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 export const DEFAULT_CURRENCY = 'USD';
@@ -37,6 +31,11 @@ export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://efeapparel.
 export const SITE_NAME = 'EFE Store';
 export const LOW_STOCK_THRESHOLD = 9;
 
-export const CONTACT_RECEIVER_EMAIL = process.env.CONTACT_EMAIL ;
+export const CONTACT_RECEIVER_EMAIL = process.env.CONTACT_EMAIL;
 
 // DD{bcc+8 - sb-yrk1d53145997@personal.example.com - for testing purposes of paypl user id
+
+export const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
+
+export const environment =
+    process.env.NEXT_PUBLIC_PAYPAL_ENVIRONMENT === 'production' ? 'production' : 'sandbox';

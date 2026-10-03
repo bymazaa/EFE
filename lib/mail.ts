@@ -213,7 +213,7 @@ export async function sendAdminCreatedEmail({
         to: email,
         subject: 'Your admin account has been created',
         html,
-        label: 'security',
+        label: 'Security',
     });
 }
 
@@ -307,7 +307,7 @@ export async function sendPasswordResetEmail({
         to: email,
         subject: 'Reset your admin password',
         html,
-        label: 'security',
+        label: 'Security',
     });
 }
 
@@ -364,7 +364,7 @@ export async function sendPasswordChangedEmail({
         to: email,
         subject: 'Your password was changed',
         html,
-        label: 'security',
+        label: 'Security',
     });
 }
 
@@ -428,7 +428,7 @@ export async function sendOrderDeliveredEmail({
         to: email,
         subject: `Your order ${orderNumber} has been delivered`,
         html,
-        label: 'order',
+        label: 'Order',
     });
 }
 
@@ -585,7 +585,7 @@ export async function sendPaymentSuccessEmail({
         to: email,
         subject: `Payment received for order ${orderNumber}`,
         html,
-        label: 'order',
+        label: 'Order',
     });
 }
 
@@ -774,7 +774,7 @@ export async function sendOrderPlacedEmail({
         to: email,
         subject: `Order ${orderNumber} confirmed`,
         html,
-        label: 'order',
+        label: 'Order',
     });
 }
 
@@ -881,7 +881,7 @@ export async function sendContactMessageEmail({
         to: CONTACT_RECEIVER_EMAIL!,
         subject: `Contact: ${emailSubject}`,
         html,
-        label: 'support',
+        label: 'Support',
         replyTo: email,
     });
 }

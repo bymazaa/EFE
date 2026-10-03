@@ -827,8 +827,10 @@ export async function placeOrder(
                 const orderStatusUrl = new URL('/order-status', baseUrl);
 
                 orderStatusUrl.searchParams.set('orderId', orderNumber);
-                orderStatusUrl.searchParams.set('email', encodeURIComponent(parsed.data.customer.email.trim().toLowerCase())); 
-            
+                orderStatusUrl.searchParams.set(
+                    'email',
+                    parsed.data.customer.email.trim().toLowerCase(),
+                );
 
                 /**
                  * Convert the shipping address to a
@@ -1251,95 +1253,64 @@ export async function updateOrderStatus(
     orderId: string,
     orderStatus: string,
 ): Promise<ActionResult> {
-    const parsedId =
-        objectIdSchema.safeParse(orderId);
+    const parsedId = objectIdSchema.safeParse(orderId);
 
     if (!parsedId.success) {
         return validationFail(parsedId.error);
     }
 
-    if (
-        !ORDER_STATUSES.includes(
-            orderStatus as OrderStatus,
-        )
-    ) {
+    if (!ORDER_STATUSES.includes(orderStatus as OrderStatus)) {
         return fail('Invalid order status.');
     }
 
     try {
         await connectDB();
 
-        const order =
-            await Order.findById(parsedId.data);
+        const order = await Order.findById(parsedId.data);
 
         if (!order) {
             return fail('Order not found.');
         }
 
-        const currentStatus =
-            order.orderStatus;
+        const currentStatus = order.orderStatus;
 
         /**
          * Already in this status.
          */
-        if (
-            currentStatus === orderStatus
-        ) {
-            return fail(
-                `Order is already ${currentStatus}.`,
-            );
+        if (currentStatus === orderStatus) {
+            return fail(`Order is already ${currentStatus}.`);
         }
 
         /**
          * Allowed status transitions.
          */
-        const allowedTransitions:
-            Record<OrderStatus, OrderStatus[]> = {
-            pending: [
-                'confirmed',
-                'cancelled',
-            ],
+        const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
+            pending: ['confirmed', 'cancelled'],
 
-            confirmed: [
-                'delivered',
-                'cancelled',
-            ],
+            confirmed: ['delivered', 'cancelled'],
 
             delivered: [],
 
             cancelled: [],
         };
 
-        const allowedNextStatuses =
-            allowedTransitions[currentStatus];
+        const allowedNextStatuses = allowedTransitions[currentStatus];
 
-        if (
-            !allowedNextStatuses.includes(
-                orderStatus as OrderStatus,
-            )
-        ) {
-            return fail(
-                `Order cannot be changed from ${currentStatus} to ${orderStatus}.`,
-            );
+        if (!allowedNextStatuses.includes(orderStatus as OrderStatus)) {
+            return fail(`Order cannot be changed from ${currentStatus} to ${orderStatus}.`);
         }
 
         /**
          * Delivered requires paid payment.
          */
-        if (
-            orderStatus === 'delivered' &&
-            order.paymentStatus !== 'paid'
-        ) {
-            return fail(
-                'Order can only be marked as delivered after payment is completed.',
-            );
+        if (orderStatus === 'delivered' && order.paymentStatus !== 'paid') {
+            return fail('Order can only be marked as delivered after payment is completed.');
         }
 
         /**
          * Update order status.
          */
-        order.orderStatus =
-            orderStatus as OrderStatus;
+        order.orderStatus = orderStatus as OrderStatus;
 
         await order.save();
 
@@ -1356,70 +1327,43 @@ export async function updateOrderStatus(
             order.paymentStatus === 'paid'
         ) {
             const customerEmail =
-                typeof order.customer?.email === 'string'
-                    ? order.customer.email.trim()
-                    : '';
+                typeof order.customer?.email === 'string' ? order.customer.email.trim() : '';
 
             const customerName =
-                typeof order.customer?.name === 'string'
-                    ? order.customer.name.trim()
-                    : '';
+                typeof order.customer?.name === 'string' ? order.customer.name.trim() : '';
 
             if (!customerEmail) {
-                console.warn(
-                    'Order delivered but customer email is missing. Skipping email.',
-                    {
-                        orderId:
-                            order._id.toString(),
-                        orderNumber:
-                            order.orderNumber,
-                        paymentStatus:
-                            order.paymentStatus,
-                        currentStatus,
-                        orderStatus,
-                    },
-                );
+                console.warn('Order delivered but customer email is missing. Skipping email.', {
+                    orderId: order._id.toString(),
+                    orderNumber: order.orderNumber,
+                    paymentStatus: order.paymentStatus,
+                    currentStatus,
+                    orderStatus,
+                });
             } else {
                 try {
-                   
-
                     await sendOrderDeliveredEmail({
                         email: customerEmail,
 
-                        customerName:
-                            customerName ||
-                            'Customer',
+                        customerName: customerName || 'Customer',
 
-                        orderNumber:
-                            order.orderNumber,
+                        orderNumber: order.orderNumber,
                     });
-
-                   
                 } catch (error) {
-                    console.error(
-                        'Failed to send order delivered email:',
-                        error,
-                        {
-                            orderId:
-                                order._id.toString(),
-                            orderNumber:
-                                order.orderNumber,
-                            email:
-                                customerEmail,
-                        },
-                    );
+                    console.error('Failed to send order delivered email:', error, {
+                        orderId: order._id.toString(),
+                        orderNumber: order.orderNumber,
+                        email: customerEmail,
+                    });
                 }
             }
         }
 
-        return ok(
-            'Order status updated successfully.',
-        );
+        return ok('Order status updated successfully.');
     } catch (error) {
         return handleError(error);
     }
 }
-
 
 /* ------------------------------------------------------------------ */
 /* Admin write - payment status                                       */
