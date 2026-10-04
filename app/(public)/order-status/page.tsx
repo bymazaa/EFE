@@ -7,6 +7,7 @@ import {
     CalendarDays,
     CheckCircle2,
     Clock3,
+    CreditCard,
     Mail,
     MapPin,
     Package,
@@ -98,6 +99,30 @@ function formatStatus(
         .replace(/\b\w/g, (char) =>
             char.toUpperCase(),
         );
+}
+
+function formatPaymentMethod(
+    value: string,
+): string {
+    switch (value.toLowerCase()) {
+        case 'paypal':
+            return 'PayPal';
+
+        case 'paylater':
+            return 'Pay Later';
+
+        case 'venmo':
+            return 'Venmo';
+
+        case 'applepay':
+            return 'Apple Pay';
+
+        case 'googlepay':
+            return 'Google Pay';
+
+        default:
+            return formatStatus(value);
+    }
 }
 
 /* ============================================================
@@ -276,6 +301,51 @@ function StatusCard({
 }
 
 /* ============================================================
+   Payment Details Card
+============================================================ */
+
+function PaymentDetailsCard({
+    paymentMethod,
+    captureId,
+}: {
+    paymentMethod: string;
+    captureId?: string | null;
+}) {
+    return (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+            <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
+                    <CreditCard className="h-5 w-5" />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-500">
+                        Payment details
+                    </p>
+
+                    <p className="mt-1 text-base font-semibold text-slate-900">
+                        {formatPaymentMethod(
+                            paymentMethod,
+                        )}
+                    </p>
+
+                    <div className="mt-3">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                            Capture ID
+                        </p>
+
+                        <p className="mt-1 break-all font-mono text-xs leading-5 text-slate-600">
+                            {captureId ||
+                                'Not available'}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+/* ============================================================
    Section Heading
 ============================================================ */
 
@@ -373,7 +443,9 @@ function SearchForm({
                             id="orderId"
                             name="orderId"
                             type="text"
-                            defaultValue={orderId}
+                            defaultValue={
+                                orderId
+                            }
                             placeholder="e.g. CND-10024"
                             autoComplete="off"
                             className="mt-2 block w-full rounded-xl border border-orange-100 bg-[#fffaf6] px-3.5 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-500/10"
@@ -392,7 +464,9 @@ function SearchForm({
                             id="email"
                             name="email"
                             type="email"
-                            defaultValue={email}
+                            defaultValue={
+                                email
+                            }
                             placeholder="you@example.com"
                             autoComplete="email"
                             className="mt-2 block w-full rounded-xl border border-orange-100 bg-[#fffaf6] px-3.5 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-500/10"
@@ -444,7 +518,10 @@ function OrderResult({
                             </p>
 
                             <h1 className="mt-1.5 font-serif text-2xl text-[#3b2419] sm:text-3xl">
-                                #{order.orderNumber}
+                                #
+                                {
+                                    order.orderNumber
+                                }
                             </h1>
 
                             <p className="mt-2 text-xs text-gray-500">
@@ -458,23 +535,39 @@ function OrderResult({
                         <div className="flex w-fit items-center gap-2 rounded-full border border-orange-100 bg-white px-3.5 py-2 text-xs font-medium text-[#765b47] shadow-sm">
                             <CalendarDays className="h-3.5 w-3.5 text-orange-500" />
 
-                            {formatDate(order.createdAt)}
+                            {formatDate(
+                                order.createdAt,
+                            )}
                         </div>
                     </div>
                 </div>
 
-                {/* Status */}
-                <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5">
+                {/* Status + Payment */}
+
+                <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3">
                     <StatusCard
                         title="Order status"
-                        status={order.orderStatus}
+                        status={
+                            order.orderStatus
+                        }
                         type="order"
                     />
 
                     <StatusCard
                         title="Payment status"
-                        status={order.paymentStatus}
+                        status={
+                            order.paymentStatus
+                        }
                         type="payment"
+                    />
+
+                    <PaymentDetailsCard
+                        paymentMethod={
+                            order.paymentMethod
+                        }
+                        captureId={
+                            order.providerCaptureId
+                        }
                     />
                 </div>
             </section>
@@ -488,7 +581,9 @@ function OrderResult({
 
                 <section className="rounded-3xl border border-orange-100 bg-white p-5 shadow-2xl shadow-gray-50 sm:p-6">
                     <SectionHeading
-                        icon={<User className="h-4 w-4" />}
+                        icon={
+                            <User className="h-4 w-4" />
+                        }
                         title="Customer Information"
                         description="Details associated with this order."
                     />
@@ -500,7 +595,8 @@ function OrderResult({
                             }
                             label="Name"
                             value={
-                                order.customer.name
+                                order.customer
+                                    .name
                             }
                         />
 
@@ -510,7 +606,8 @@ function OrderResult({
                             }
                             label="Email"
                             value={
-                                order.customer.email
+                                order.customer
+                                    .email
                             }
                         />
 
@@ -520,7 +617,8 @@ function OrderResult({
                             }
                             label="Phone"
                             value={
-                                order.customer.phone
+                                order.customer
+                                    .phone
                             }
                         />
                     </div>
@@ -796,7 +894,9 @@ export default async function OrderStatusPage({
         return (
             <main className="min-h-screen bg-[#fff8f2]">
                 <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-                    <OrderResult order={order} />
+                    <OrderResult
+                        order={order}
+                    />
                 </div>
             </main>
         );
