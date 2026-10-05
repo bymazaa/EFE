@@ -6,6 +6,8 @@ import { Toaster } from 'sonner';
 
 import './globals.css';
 import { SITE_NAME, SITE_URL } from '@/lib/constants';
+import { env } from 'process';
+import { config } from 'dotenv';
 
 
 /**
@@ -217,6 +219,8 @@ export const viewport: Viewport = {
  * product pages, because those pages contain the actual product,
  * price and availability information.
  */
+
+
 
 const jsonLd = {
     '@context': 'https://schema.org',

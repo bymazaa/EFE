@@ -3,8 +3,7 @@ import type { MetadataRoute } from 'next';
 import { getActiveProducts } from '@/services/product.service';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const siteUrl =
-        process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
     const products = await getActiveProducts();
 
@@ -45,23 +44,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         },
     ];
 
-    const productPages: MetadataRoute.Sitemap = products.map(
-        (product) => ({
-            url: `${siteUrl}/products/${product.slug}`,
+    const productPages: MetadataRoute.Sitemap = products.map((product) => ({
+        url: `${siteUrl}/products/${product.slug}`,
 
-            lastModified:
-                product.updatedAt ??
-                product.createdAt ??
-                new Date(),
+        lastModified: product.updatedAt ?? product.createdAt ?? new Date(),
 
-            changeFrequency: 'weekly',
+        changeFrequency: 'weekly',
 
-            priority: 0.8,
-        }),
-    );
+        priority: 0.8,
+    }));
 
-    return [
-        ...staticPages,
-        ...productPages,
-    ];
+    return [...staticPages, ...productPages];
 }

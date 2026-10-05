@@ -105,7 +105,7 @@ export default async function AboutPage() {
 
                 <div className="relative mx-auto max-w-5xl px-4 py-20 text-center sm:px-6 sm:py-24 lg:px-8">
                     <span className="inline-flex rounded-full border border-orange-200 bg-white px-3.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-orange-700 shadow-sm">
-                        Our Story
+                        Our Story 
                     </span>
 
                     <h1 className="mx-auto mt-6 max-w-4xl font-serif text-4xl leading-[1.08] tracking-tight text-chocolate sm:text-5xl lg:text-6xl">
