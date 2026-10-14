@@ -52,6 +52,9 @@ export default async function AdminLoginPage() {
                         <div className="text-center">
                             <ForgotPasswordModal />
                         </div>
+                        <div className="text-center my-2">
+                            <a href="/" className="text-gray-500">Go  To Home Page</a>
+                        </div>
                     </CardBody>
                 </Card>
 
